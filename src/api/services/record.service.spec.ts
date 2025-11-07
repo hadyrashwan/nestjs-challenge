@@ -1,29 +1,31 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { RecordController } from './record.controller';
-import { RecordService } from '../services/record.service';
+import { RecordService } from './record.service';
+import { RecordRepository } from '../repository/record.repository';
 import { CreateRecordRequestDTO } from '../dtos/create-record.request.dto';
 import { RecordCategory, RecordFormat } from '../schemas/record.enum';
 
-describe('RecordController', () => {
-  let recordController: RecordController;
+describe('RecordService', () => {
   let recordService: RecordService;
+  let recordRepository: RecordRepository;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      controllers: [RecordController],
       providers: [
+        RecordService,
         {
-          provide: RecordService,
+          provide: RecordRepository,
           useValue: {
             create: jest.fn(),
             findAll: jest.fn(),
+            findById: jest.fn(),
+            update: jest.fn(),
           },
         },
       ],
     }).compile();
 
-    recordController = module.get<RecordController>(RecordController);
     recordService = module.get<RecordService>(RecordService);
+    recordRepository = module.get<RecordRepository>(RecordRepository);
   });
 
   it('should create a new record', async () => {
@@ -46,11 +48,13 @@ describe('RecordController', () => {
       category: RecordCategory.ALTERNATIVE,
     };
 
-    jest.spyOn(recordService, 'create').mockResolvedValue(savedRecord as any);
+    jest
+      .spyOn(recordRepository, 'create')
+      .mockResolvedValue(savedRecord as any);
 
-    const result = await recordController.create(createRecordDto);
+    const result = await recordService.create(createRecordDto);
     expect(result).toEqual(savedRecord);
-    expect(recordService.create).toHaveBeenCalledWith(createRecordDto);
+    expect(recordRepository.create).toHaveBeenCalledWith(createRecordDto);
   });
 
   it('should return an array of records', async () => {
@@ -59,10 +63,10 @@ describe('RecordController', () => {
       { _id: '2', name: 'Record 2', price: 200, qty: 20 },
     ];
 
-    jest.spyOn(recordService, 'findAll').mockResolvedValue(records as any);
+    jest.spyOn(recordRepository, 'findAll').mockResolvedValue(records as any);
 
-    const result = await recordController.findAll();
+    const result = await recordService.findAll();
     expect(result).toEqual(records);
-    expect(recordService.findAll).toHaveBeenCalled();
+    expect(recordRepository.findAll).toHaveBeenCalled();
   });
 });
