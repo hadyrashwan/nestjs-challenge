@@ -3,6 +3,7 @@ import { RecordController } from './record.controller';
 import { RecordService } from '../services/record.service';
 import { CreateRecordRequestDTO } from '../dtos/create-record.request.dto';
 import { RecordCategory, RecordFormat } from '../schemas/record.enum';
+import { RecordFilterDTO } from '../dtos/record-filter.dto';
 
 describe('RecordController', () => {
   let recordController: RecordController;
@@ -59,10 +60,12 @@ describe('RecordController', () => {
       { _id: '2', name: 'Record 2', price: 200, qty: 20 },
     ];
 
+    const filter: RecordFilterDTO = {};
+
     jest.spyOn(recordService, 'findAll').mockResolvedValue(records as any);
 
-    const result = await recordController.findAll();
+    const result = await recordController.findAll(filter);
     expect(result).toEqual(records);
-    expect(recordService.findAll).toHaveBeenCalled();
+    expect(recordService.findAll).toHaveBeenCalledWith(filter);
   });
 });

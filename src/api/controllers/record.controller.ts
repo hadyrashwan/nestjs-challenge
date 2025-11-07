@@ -1,10 +1,10 @@
 import { Controller, Get, Post, Body, Param, Query, Put } from '@nestjs/common';
 import { ApiOperation, ApiQuery, ApiResponse } from '@nestjs/swagger';
 import { CreateRecordRequestDTO } from '../dtos/create-record.request.dto';
-import { RecordCategory, RecordFormat } from '../schemas/record.enum';
 import { UpdateRecordRequestDTO } from '../dtos/update-record.request.dto';
 import { RecordService } from '../services/record.service';
 import { Record } from '../schemas/record.schema';
+import { RecordFilterDTO } from '../dtos/record-filter.dto';
 
 @Controller('records')
 export class RecordController {
@@ -36,46 +36,8 @@ export class RecordController {
     description: 'List of records',
     type: [Record],
   })
-  @ApiQuery({
-    name: 'q',
-    required: false,
-    description:
-      'Search query (search across multiple fields like artist, album, category, etc.)',
-    type: String,
-  })
-  @ApiQuery({
-    name: 'artist',
-    required: false,
-    description: 'Filter by artist name',
-    type: String,
-  })
-  @ApiQuery({
-    name: 'album',
-    required: false,
-    description: 'Filter by album name',
-    type: String,
-  })
-  @ApiQuery({
-    name: 'format',
-    required: false,
-    description: 'Filter by record format (Vinyl, CD, etc.)',
-    enum: RecordFormat,
-    type: String,
-  })
-  @ApiQuery({
-    name: 'category',
-    required: false,
-    description: 'Filter by record category (e.g., Rock, Jazz)',
-    enum: RecordCategory,
-    type: String,
-  })
-  async findAll(
-    @Query('q') q?: string,
-    @Query('artist') artist?: string,
-    @Query('album') album?: string,
-    @Query('format') format?: RecordFormat,
-    @Query('category') category?: RecordCategory,
-  ): Promise<Record[]> {
-    return await this.recordService.findAll(q, artist, album, format, category);
+  @ApiQuery({ type: RecordFilterDTO })
+  async findAll(@Query() filter: RecordFilterDTO): Promise<Record[]> {
+    return await this.recordService.findAll(filter);
   }
 }

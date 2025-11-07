@@ -1,9 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { FilterQuery, Model } from 'mongoose';
 import { Record } from '../schemas/record.schema';
 import { CreateRecordRequestDTO } from '../dtos/create-record.request.dto';
 import { UpdateRecordRequestDTO } from '../dtos/update-record.request.dto';
+import { RecordFilterDTO } from '../dtos/record-filter.dto';
 
 @Injectable()
 export class RecordRepository {
@@ -16,8 +17,34 @@ export class RecordRepository {
     return await newRecord.save();
   }
 
-  async findAll(): Promise<Record[]> {
-    return await this.recordModel.find().exec();
+  async findAll(filter: RecordFilterDTO): Promise<Record[]> {
+    const mongoFilter: FilterQuery<Record> = {};
+
+    if (filter.q) {
+      mongoFilter.$or = [
+        { artist: { $regex: filter.q, $options: 'i' } },
+        { album: { $regex: filter.q, $options: 'i' } },
+        { category: { $regex: filter.q, $options: 'i' } },
+      ];
+    }
+
+    if (filter.artist) {
+      mongoFilter.artist = { $regex: filter.artist, $options: 'i' };
+    }
+
+    if (filter.album) {
+      mongoFilter.album = { $regex: filter.album, $options: 'i' };
+    }
+
+    if (filter.format) {
+      mongoFilter.format = filter.format;
+    }
+
+    if (filter.category) {
+      mongoFilter.category = filter.category;
+    }
+
+    return await this.recordModel.find(mongoFilter).exec();
   }
 
   async findById(id: string): Promise<Record> {

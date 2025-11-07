@@ -3,6 +3,9 @@ import { RecordService } from './record.service';
 import { RecordRepository } from '../repository/record.repository';
 import { CreateRecordRequestDTO } from '../dtos/create-record.request.dto';
 import { RecordCategory, RecordFormat } from '../schemas/record.enum';
+import { RecordFilterDTO } from '../dtos/record-filter.dto';
+import { ConflictException } from '@nestjs/common';
+import { MONGO_ERROR_CODES } from '../errors/mongo-errors';
 
 describe('RecordService', () => {
   let recordService: RecordService;
@@ -48,13 +51,30 @@ describe('RecordService', () => {
       category: RecordCategory.ALTERNATIVE,
     };
 
-    jest
-      .spyOn(recordRepository, 'create')
-      .mockResolvedValue(savedRecord as any);
+    jest.spyOn(recordRepository, 'create').mockResolvedValue(savedRecord as any);
 
     const result = await recordService.create(createRecordDto);
     expect(result).toEqual(savedRecord);
     expect(recordRepository.create).toHaveBeenCalledWith(createRecordDto);
+  });
+
+  it('should throw a conflict exception when creating a duplicate record', async () => {
+    const createRecordDto: CreateRecordRequestDTO = {
+      artist: 'Test',
+      album: 'Test Record',
+      price: 100,
+      qty: 10,
+      format: RecordFormat.VINYL,
+      category: RecordCategory.ALTERNATIVE,
+    };
+
+    jest.spyOn(recordRepository, 'create').mockRejectedValue({ code: MONGO_ERROR_CODES.DUPLICATE_KEY });
+
+    await expect(recordService.create(createRecordDto)).rejects.toThrow(
+      new ConflictException(
+        'Record with the same artist, album, and format already exists.',
+      ),
+    );
   });
 
   it('should return an array of records', async () => {
@@ -63,10 +83,12 @@ describe('RecordService', () => {
       { _id: '2', name: 'Record 2', price: 200, qty: 20 },
     ];
 
+    const filter: RecordFilterDTO = {};
+
     jest.spyOn(recordRepository, 'findAll').mockResolvedValue(records as any);
 
-    const result = await recordService.findAll();
+    const result = await recordService.findAll(filter);
     expect(result).toEqual(records);
-    expect(recordRepository.findAll).toHaveBeenCalled();
+    expect(recordRepository.findAll).toHaveBeenCalledWith(filter);
   });
 });
