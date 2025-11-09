@@ -1,9 +1,10 @@
+import { HttpModule } from '@nestjs/axios';
 import { Test, TestingModule } from '@nestjs/testing';
-import { RecordController } from './record.controller';
-import { RecordService } from '../services/record.service';
 import { CreateRecordRequestDTO } from '../dtos/create-record.request.dto';
-import { RecordCategory, RecordFormat } from '../schemas/record.enum';
 import { RecordFilterDTO } from '../dtos/record-filter.dto';
+import { RecordCategory, RecordFormat } from '../schemas/record.enum';
+import { RecordService } from '../services/record.service';
+import { RecordController } from './record.controller';
 
 describe('RecordController', () => {
   let recordController: RecordController;
@@ -21,6 +22,7 @@ describe('RecordController', () => {
           },
         },
       ],
+      imports: [HttpModule],
     }).compile();
 
     recordController = module.get<RecordController>(RecordController);

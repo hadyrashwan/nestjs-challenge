@@ -26,9 +26,20 @@ export class Record extends Document {
 
   @Prop()
   mbid?: string;
+
+  @Prop([String])
+  tracklist: string[];
 }
 
 export const RecordSchema = SchemaFactory.createForClass(Record);
 
+RecordSchema.set('toJSON', {
+  versionKey: false, // remove __v
+  transform: (_, ret) => {
+    ret.id = ret._id; // rename _id → id
+    delete ret._id;
+    return ret;
+  },
+});
 RecordSchema.index({ artist: 1, album: 1, format: 1 }, { unique: true });
 RecordSchema.index({ category: 1, format: 1, artist: 1, album: 1 });

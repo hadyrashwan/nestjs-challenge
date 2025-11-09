@@ -2,9 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { FilterQuery, Model } from 'mongoose';
 import { Record } from '../schemas/record.schema';
-import { CreateRecordRequestDTO } from '../dtos/create-record.request.dto';
-import { UpdateRecordRequestDTO } from '../dtos/update-record.request.dto';
 import { RecordFilterDTO } from '../dtos/record-filter.dto';
+import { RecordData } from '../types/record.data-type';
 
 @Injectable()
 export class RecordRepository {
@@ -12,8 +11,8 @@ export class RecordRepository {
     @InjectModel('Record') private readonly recordModel: Model<Record>,
   ) {}
 
-  async create(createRecordDto: CreateRecordRequestDTO): Promise<Record> {
-    const newRecord = new this.recordModel(createRecordDto);
+  async create(data: RecordData): Promise<Record> {
+    const newRecord = new this.recordModel(data);
     return await newRecord.save();
   }
 
@@ -51,12 +50,9 @@ export class RecordRepository {
     return await this.recordModel.findById(id).exec();
   }
 
-  async update(
-    id: string,
-    updateRecordDto: UpdateRecordRequestDTO,
-  ): Promise<Record> {
+  async update(id: string, update: RecordData): Promise<Record> {
     return await this.recordModel
-      .findByIdAndUpdate(id, updateRecordDto, { new: true })
+      .findByIdAndUpdate(id, update, { new: true })
       .exec();
   }
 }
