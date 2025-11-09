@@ -7,11 +7,12 @@ import { parseStringPromise } from 'xml2js';
 export class TracklistService {
   constructor(private readonly httpService: HttpService) {}
 
-  async addTrackList(mbid: string): Promise<string[] | undefined> {
+  async addTrackList(mbid: string): Promise<string[]> {
     if (!mbid) {
-      return undefined;
+      return [];
     }
-    return this.getTracklist(mbid);
+    const tracklist = await this.getTracklist(mbid);
+    return tracklist || [];
   }
 
   async updateTrackList(
@@ -24,7 +25,7 @@ export class TracklistService {
     return undefined;
   }
 
-  private async getTracklist(mbid: string): Promise<string[]> {
+  private async getTracklist(mbid: string): Promise<string[] | undefined> {
     // We can offload into message queue in real-world scenario.
     const url = `https://beta.musicbrainz.org/ws/2/release/${mbid}?inc=recordings&fmt=xml`;
     try {
@@ -39,7 +40,7 @@ export class TracklistService {
       const tracks = trackList?.track;
 
       if (!tracks) {
-        return [];
+        return undefined;
       }
       return tracks.map((track) => track.recording[0].title[0]);
     } catch (error) {

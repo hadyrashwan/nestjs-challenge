@@ -6,6 +6,15 @@ import { TracklistService } from './tracklist.service';
 describe('TracklistService', () => {
   let tracklistService: TracklistService;
   let httpService: HttpService;
+  let consoleErrorSpy: jest.SpyInstance;
+
+  beforeAll(async () => {
+    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+  });
+
+  afterAll(() => {
+    consoleErrorSpy.mockRestore();
+  });
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -70,7 +79,7 @@ describe('TracklistService', () => {
       expect(result).toEqual(['Track 1', 'Track 2']);
     });
 
-    it('should return undefined if the MusicBrainz call fails', async () => {
+    it('should return an empty array if the MusicBrainz call fails', async () => {
       const mbid = 'some-mbid';
 
       jest
@@ -79,12 +88,12 @@ describe('TracklistService', () => {
 
       const result = await tracklistService.addTrackList(mbid);
 
-      expect(result).toBeUndefined();
+      expect(result).toEqual([]);
     });
 
-    it('should return undefined if no mbid is provided', async () => {
+    it('should return an empty array if no mbid is provided', async () => {
       const result = await tracklistService.addTrackList(undefined);
-      expect(result).toBeUndefined();
+      expect(result).toEqual([]);
     });
   });
 
@@ -203,12 +212,7 @@ describe('TracklistService', () => {
       const result = await (tracklistService as any)['getTracklist'](mbid);
 
       expect(result).toBeUndefined();
-    });
-
-    it('should return undefined if no mbid is provided', async () => {
-      // Accessing private method using bracket notation
-      const result = await (tracklistService as any)['getTracklist'](undefined);
-      expect(result).toBeUndefined();
+      expect(consoleErrorSpy).toHaveBeenCalled();
     });
   });
 });

@@ -12,8 +12,7 @@ export class RecordRepository {
   ) {}
 
   async create(data: RecordData): Promise<Record> {
-    const newRecord = new this.recordModel(data);
-    return await newRecord.save();
+    return await this.recordModel.create(data);
   }
 
   async findAll(filter: RecordFilterDTO): Promise<Record[]> {

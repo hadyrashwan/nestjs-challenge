@@ -54,7 +54,10 @@ export class RecordService {
       existingRecord.mbid,
     );
 
-    const update: RecordData = { ...updateRecordDto, tracklist: tracklist || existingRecord.tracklist };
+    const update: RecordData = { ...updateRecordDto };
+    if (tracklist !== undefined) {
+      update.tracklist = tracklist;
+    }
     const updated = await this.recordRepository.update(id, update);
     if (!updated) {
       throw new InternalServerErrorException('Record not found after update');

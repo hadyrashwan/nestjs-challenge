@@ -3,6 +3,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { CreateRecordRequestDTO } from '../dtos/create-record.request.dto';
 import { RecordFilterDTO } from '../dtos/record-filter.dto';
 import { RecordCategory, RecordFormat } from '../schemas/record.enum';
+import { InternalServerErrorException } from '@nestjs/common';
 import { RecordService } from '../services/record.service';
 import { RecordController } from './record.controller';
 
@@ -19,6 +20,7 @@ describe('RecordController', () => {
           useValue: {
             create: jest.fn(),
             findAll: jest.fn(),
+            update: jest.fn(),
           },
         },
       ],
@@ -69,5 +71,17 @@ describe('RecordController', () => {
     const result = await recordController.findAll(filter);
     expect(result).toEqual(records);
     expect(recordService.findAll).toHaveBeenCalledWith(filter);
+  });
+
+  it('should throw InternalServerErrorException when recordService.update throws InternalServerErrorException', async () => {
+    const recordId = 'someId';
+    const updateRecordDto = { artist: 'Updated Artist' };
+    jest
+      .spyOn(recordService, 'update')
+      .mockRejectedValue(new InternalServerErrorException());
+
+    await expect(
+      recordController.update({ id: recordId }, updateRecordDto),
+    ).rejects.toThrow(new InternalServerErrorException());
   });
 });
