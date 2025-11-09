@@ -23,9 +23,10 @@ export class RecordService {
   async create(createRecordDto: CreateRecordRequestDTO): Promise<Record> {
     const recordToCreate: RecordData = { ...createRecordDto };
 
-    recordToCreate.tracklist = await this.tracklistService.addTrackList(
+    const tracklist = await this.tracklistService.addTrackList(
       createRecordDto.mbid,
     );
+    recordToCreate.tracklist = tracklist || [];
 
     try {
       return await this.recordRepository.create(recordToCreate);
@@ -55,7 +56,7 @@ export class RecordService {
     );
 
     const update: RecordData = { ...updateRecordDto };
-    if (tracklist !== undefined) {
+    if (tracklist !== null) {
       update.tracklist = tracklist;
     }
     const updated = await this.recordRepository.update(id, update);
@@ -64,6 +65,10 @@ export class RecordService {
     }
 
     return updated;
+  }
+
+  async findById(id: string): Promise<Record> {
+    return await this.recordRepository.findById(id);
   }
 
   async findAll(filter: RecordFilterDTO): Promise<Record[]> {

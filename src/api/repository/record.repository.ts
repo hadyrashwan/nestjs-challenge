@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { FilterQuery, Model } from 'mongoose';
+import { FilterQuery, Model, ClientSession } from 'mongoose';
 import { Record } from '../schemas/record.schema';
 import { RecordFilterDTO } from '../dtos/record-filter.dto';
 import { RecordData } from '../types/record.data-type';
@@ -45,13 +45,31 @@ export class RecordRepository {
     return await this.recordModel.find(mongoFilter).exec();
   }
 
-  async findById(id: string): Promise<Record> {
-    return await this.recordModel.findById(id).exec();
+  async findById(
+    id: string,
+    options?: { session?: ClientSession },
+  ): Promise<Record> {
+    return await this.recordModel.findById(id, null, options).exec();
   }
 
   async update(id: string, update: RecordData): Promise<Record> {
     return await this.recordModel
       .findByIdAndUpdate(id, update, { new: true })
       .exec();
+  }
+
+  async deductQuantity(
+    id: string,
+    quantity: number,
+    options?: { session?: ClientSession },
+  ): Promise<Record | null> {
+    const updatedRecord = (await this.recordModel
+      .findOneAndUpdate(
+        { _id: id, qty: { $gte: quantity } },
+        { $inc: { qty: -quantity } },
+        { new: true, ...options },
+      )
+      .exec()) as Record | null;
+    return updatedRecord;
   }
 }

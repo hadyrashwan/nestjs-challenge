@@ -26,7 +26,7 @@ describe('RecordService', () => {
     qty: 10,
     format: RecordFormat.VINYL,
     category: RecordCategory.ROCK,
-    mbid: 'existing-mbid', // Added mbid
+    mbid: 'existing-mbid',
     tracklist: ['Track A', 'Track B'],
   };
 
@@ -42,6 +42,7 @@ describe('RecordService', () => {
             findAll: jest.fn(),
             findById: jest.fn(),
             update: jest.fn(),
+            deductQuantity: jest.fn(),
           },
         },
         {
@@ -210,9 +211,7 @@ describe('RecordService', () => {
       jest
         .spyOn(recordRepository, 'findById')
         .mockResolvedValue(mockExistingRecord as any);
-      jest
-        .spyOn(tracklistService, 'updateTrackList')
-        .mockResolvedValue(undefined); // Should return undefined
+      jest.spyOn(tracklistService, 'updateTrackList').mockResolvedValue(null);
       jest.spyOn(recordRepository, 'update').mockResolvedValue({
         ...mockExistingRecord,
         ...updateRecordDto,
@@ -270,9 +269,7 @@ describe('RecordService', () => {
       jest
         .spyOn(recordRepository, 'findById')
         .mockResolvedValue(mockExistingRecord as any);
-      jest
-        .spyOn(tracklistService, 'updateTrackList')
-        .mockResolvedValue(undefined); // MusicBrainz API call fails
+      jest.spyOn(tracklistService, 'updateTrackList').mockResolvedValue(null); // MusicBrainz API call fails
       jest.spyOn(recordRepository, 'update').mockResolvedValue({
         ...mockExistingRecord,
         ...updateRecordDto,

@@ -8,7 +8,7 @@ import mongoose from 'mongoose';
 describe('RecordController (e2e)', () => {
   let app: INestApplication;
   let recordModel;
-  let consoleErrorSpy: jest.SpyInstance; // Added this line
+  let consoleErrorSpy: jest.SpyInstance;
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -25,7 +25,7 @@ describe('RecordController (e2e)', () => {
     recordModel = app.get('RecordModel');
     await app.init();
     await recordModel.deleteMany({});
-    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {}); // Added this line
+    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
   });
 
   afterAll(() => {
@@ -242,7 +242,6 @@ describe('RecordController (e2e)', () => {
     const createRecordDto = {
       artist: 'Metallica',
       album: 'Master of Puppets',
-
       price: 25,
       qty: 10,
       format: RecordFormat.VINYL,

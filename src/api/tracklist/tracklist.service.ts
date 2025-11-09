@@ -1,35 +1,37 @@
 import { Injectable } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
+import { retry } from 'rxjs/operators';
 import { parseStringPromise } from 'xml2js';
 
 @Injectable()
 export class TracklistService {
   constructor(private readonly httpService: HttpService) {}
 
-  async addTrackList(mbid: string): Promise<string[]> {
+  async addTrackList(mbid: string): Promise<string[] | null> {
     if (!mbid) {
-      return [];
+      return null;
     }
     const tracklist = await this.getTracklist(mbid);
-    return tracklist || [];
+    return tracklist;
   }
 
   async updateTrackList(
     newMbid: string,
     existingMbid?: string,
-  ): Promise<string[] | undefined> {
+  ): Promise<string[] | null> {
     if (newMbid && newMbid !== existingMbid) {
       return this.getTracklist(newMbid);
     }
-    return undefined;
+    return null;
   }
 
-  private async getTracklist(mbid: string): Promise<string[] | undefined> {
-    // We can offload into message queue in real-world scenario.
+  private async getTracklist(mbid: string): Promise<string[] | null> {
     const url = `https://beta.musicbrainz.org/ws/2/release/${mbid}?inc=recordings&fmt=xml`;
     try {
-      const response = await firstValueFrom(this.httpService.get(url));
+      const response = await firstValueFrom(
+        this.httpService.get(url).pipe(retry(3)),
+      );
       const xml = response.data;
       const parsed = await parseStringPromise(xml);
 
@@ -40,7 +42,7 @@ export class TracklistService {
       const tracks = trackList?.track;
 
       if (!tracks) {
-        return undefined;
+        return null;
       }
       return tracks.map((track) => track.recording[0].title[0]);
     } catch (error) {
@@ -50,8 +52,7 @@ export class TracklistService {
         mbid,
       };
       console.error('API error:', cause);
-      // For the sake of the exercise, we'll just log the error and continue
-      return undefined;
+      return null;
     }
   }
 }

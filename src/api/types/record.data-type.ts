@@ -17,5 +17,5 @@ export type RecordData = {
    * The list of track names fetched from MusicBrainz
    * or other sources. Not provided by client requests.
    */
-  tracklist?: string[];
+  tracklist?: string[] | null;
 };

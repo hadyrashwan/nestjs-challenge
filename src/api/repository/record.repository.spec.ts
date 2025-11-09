@@ -150,7 +150,7 @@ describe('RecordRepository', () => {
       } as any);
       const result = await repository.findById('someId');
       expect(result).toEqual(mockRecord);
-      expect(model.findById).toHaveBeenCalledWith('someId');
+      expect(model.findById).toHaveBeenCalledWith('someId', null, undefined);
     });
 
     it('should return null if record is not found', async () => {
@@ -159,7 +159,11 @@ describe('RecordRepository', () => {
       } as any);
       const result = await repository.findById('nonExistentId');
       expect(result).toBeNull();
-      expect(model.findById).toHaveBeenCalledWith('nonExistentId');
+      expect(model.findById).toHaveBeenCalledWith(
+        'nonExistentId',
+        null,
+        undefined,
+      );
     });
   });
 

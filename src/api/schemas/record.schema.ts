@@ -34,9 +34,9 @@ export class Record extends Document {
 export const RecordSchema = SchemaFactory.createForClass(Record);
 
 RecordSchema.set('toJSON', {
-  versionKey: false, // remove __v
+  versionKey: false,
   transform: (_, ret) => {
-    ret.id = ret._id; // rename _id → id
+    ret.id = ret._id;
     delete ret._id;
     return ret;
   },

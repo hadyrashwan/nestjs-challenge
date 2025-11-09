@@ -13,5 +13,6 @@ import { TracklistModule } from './tracklist/tracklist.module';
   ],
   controllers: [RecordController],
   providers: [RecordService, RecordRepository],
+  exports: [RecordService, RecordRepository],
 })
 export class RecordModule {}
