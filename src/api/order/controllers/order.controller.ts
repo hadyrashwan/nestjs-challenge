@@ -2,7 +2,7 @@ import { Controller, Post, Body, HttpCode, HttpStatus } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { OrderService } from '../services/order.service';
 import { CreateOrderRequestDTO } from '../dtos/create-order.request.dto';
-import { Order } from '../schemas/order.schema';
+import { OrderResponseDTO } from '../dtos/create-order.response.dto';
 
 @ApiTags('orders')
 @Controller('orders')
@@ -15,7 +15,7 @@ export class OrderController {
   @ApiResponse({
     status: HttpStatus.CREATED,
     description: 'Order successfully created',
-    type: Order,
+    type: OrderResponseDTO,
   })
   @ApiResponse({
     status: HttpStatus.NOT_FOUND,
@@ -31,7 +31,7 @@ export class OrderController {
   })
   async createOrder(
     @Body() createOrderDto: CreateOrderRequestDTO,
-  ): Promise<Order> {
+  ): Promise<OrderResponseDTO> {
     return this.orderService.createOrder(createOrderDto);
   }
 }

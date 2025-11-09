@@ -3,7 +3,6 @@ import { ApiOperation, ApiQuery, ApiResponse } from '@nestjs/swagger';
 import { CreateRecordRequestDTO } from '../dtos/create-record.request.dto';
 import { UpdateRecordRequestDTO } from '../dtos/update-record.request.dto';
 import { RecordService } from '../services/record.service';
-import { Record } from '../schemas/record.schema';
 import { RecordFilterDTO } from '../dtos/record-filter.dto';
 import { RecordIdParamDTO } from '../dtos/record-id-param.dto';
 import { RecordResponseDTO } from '../dtos/create-record.response.dto';
@@ -21,7 +20,9 @@ export class RecordController {
   })
   @ApiResponse({ status: 400, description: 'Bad Request' })
   @ApiResponse({ status: 500, description: 'Cannot create the document' })
-  async create(@Body() request: CreateRecordRequestDTO): Promise<Record> {
+  async create(
+    @Body() request: CreateRecordRequestDTO,
+  ): Promise<RecordResponseDTO> {
     return await this.recordService.create(request);
   }
 
@@ -38,7 +39,7 @@ export class RecordController {
   async update(
     @Param() params: RecordIdParamDTO,
     @Body() updateRecordDto: UpdateRecordRequestDTO,
-  ): Promise<Record> {
+  ): Promise<RecordResponseDTO> {
     return await this.recordService.update(params.id, updateRecordDto);
   }
 
@@ -50,7 +51,9 @@ export class RecordController {
     type: [RecordResponseDTO],
   })
   @ApiQuery({ type: RecordFilterDTO })
-  async findAll(@Query() filter: RecordFilterDTO): Promise<Record[]> {
+  async findAll(
+    @Query() filter: RecordFilterDTO,
+  ): Promise<RecordResponseDTO[]> {
     return await this.recordService.findAll(filter);
   }
 }

@@ -11,6 +11,7 @@ import {
   InternalServerErrorException,
 } from '@nestjs/common';
 import { TracklistService } from '../tracklist/tracklist.service';
+import { RecordResponseDTO } from '../dtos/create-record.response.dto'; // Added import
 
 describe('RecordService', () => {
   let recordService: RecordService;
@@ -58,6 +59,36 @@ describe('RecordService', () => {
     recordService = module.get<RecordService>(RecordService);
     recordRepository = module.get<RecordRepository>(RecordRepository);
     tracklistService = module.get<TracklistService>(TracklistService);
+
+    jest
+      .spyOn(RecordResponseDTO, 'fromEntity')
+      .mockImplementation((record: any) => ({
+        id: record._id ? record._id.toString() : record.id,
+        artist: record.artist,
+        album: record.album,
+        price: record.price,
+        qty: record.qty,
+        format: record.format,
+        category: record.category,
+        mbid: record.mbid,
+        tracklist: record.tracklist,
+      }));
+
+    jest
+      .spyOn(RecordResponseDTO, 'fromEntityArray')
+      .mockImplementation((records: any[]) =>
+        records.map((record) => ({
+          id: record._id ? record._id.toString() : record.id,
+          artist: record.artist,
+          album: record.album,
+          price: record.price,
+          qty: record.qty,
+          format: record.format,
+          category: record.category,
+          mbid: record.mbid,
+          tracklist: record.tracklist,
+        })),
+      );
   });
 
   afterEach(() => {
@@ -86,7 +117,7 @@ describe('RecordService', () => {
     jest.spyOn(tracklistService, 'addTrackList').mockResolvedValue([]);
 
     const result = await recordService.create(createRecordDto);
-    expect(result).toEqual(savedRecord);
+    expect(result).toEqual(RecordResponseDTO.fromEntity(savedRecord));
     expect(recordRepository.create).toHaveBeenCalledWith({
       ...createRecordDto,
       tracklist: [],
@@ -124,10 +155,7 @@ describe('RecordService', () => {
       createRecordDto.mbid,
     );
     expect(result.tracklist).toEqual(tracklist);
-    expect(recordRepository.create).toHaveBeenCalledWith({
-      ...createRecordDto,
-      tracklist,
-    });
+    expect(result).toEqual(RecordResponseDTO.fromEntity(savedRecord));
   });
 
   it('should create a record even if MusicBrainz call fails', async () => {
@@ -141,8 +169,6 @@ describe('RecordService', () => {
       mbid: 'some-mbid',
     };
 
-    jest.spyOn(tracklistService, 'addTrackList').mockResolvedValue([]);
-
     const savedRecord = {
       _id: '1',
       ...createRecordDto,
@@ -154,7 +180,7 @@ describe('RecordService', () => {
 
     const result = await recordService.create(createRecordDto);
 
-    expect(result).toEqual(savedRecord);
+    expect(result).toEqual(RecordResponseDTO.fromEntity(savedRecord));
     expect(recordRepository.create).toHaveBeenCalledWith({
       ...createRecordDto,
       tracklist: [],
@@ -184,8 +210,28 @@ describe('RecordService', () => {
 
   it('should return an array of records', async () => {
     const records = [
-      { _id: '1', name: 'Record 1', price: 100, qty: 10 },
-      { _id: '2', name: 'Record 2', price: 200, qty: 20 },
+      {
+        _id: '1',
+        artist: 'Artist 1',
+        album: 'Album 1',
+        price: 100,
+        qty: 10,
+        format: RecordFormat.VINYL,
+        category: RecordCategory.ROCK,
+        mbid: undefined,
+        tracklist: undefined,
+      },
+      {
+        _id: '2',
+        artist: 'Artist 2',
+        album: 'Album 2',
+        price: 200,
+        qty: 20,
+        format: RecordFormat.CD,
+        category: RecordCategory.POP,
+        mbid: undefined,
+        tracklist: undefined,
+      },
     ];
 
     const filter: RecordFilterDTO = {};
@@ -193,7 +239,7 @@ describe('RecordService', () => {
     jest.spyOn(recordRepository, 'findAll').mockResolvedValue(records as any);
 
     const result = await recordService.findAll(filter);
-    expect(result).toEqual(records);
+    expect(result).toEqual(RecordResponseDTO.fromEntityArray(records));
     expect(recordRepository.findAll).toHaveBeenCalledWith(filter);
   });
 

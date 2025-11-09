@@ -11,6 +11,7 @@ import mongoose from 'mongoose';
 import { OrderRepository } from '../repository/order.repository';
 import { RecordRepository } from '../../repository/record.repository';
 import { getConnectionToken } from '@nestjs/mongoose';
+import { OrderResponseDTO } from '../dtos/create-order.response.dto'; // Added import
 
 describe('OrderService', () => {
   let service: OrderService;
@@ -22,12 +23,6 @@ describe('OrderService', () => {
     commitTransaction: jest.fn(),
     abortTransaction: jest.fn(),
     endSession: jest.fn(),
-  };
-
-  const mockOrder = {
-    record: 'recordId123',
-    quantity: 2,
-    save: jest.fn().mockResolvedValue(true),
   };
 
   const mockRecord = {
@@ -74,6 +69,12 @@ describe('OrderService', () => {
     service = module.get<OrderService>(OrderService);
     orderRepository = module.get<OrderRepository>(OrderRepository);
     recordRepository = module.get<RecordRepository>(RecordRepository);
+
+    jest.spyOn(OrderResponseDTO, 'fromEntity').mockImplementation((order: any) => ({
+      id: order._id.toHexString(),
+      record: order.record.toHexString(),
+      quantity: order.quantity,
+    }));
   });
 
   it('should be defined', () => {
@@ -88,7 +89,13 @@ describe('OrderService', () => {
       jest
         .spyOn(recordRepository, 'deductQuantity')
         .mockResolvedValue({ ...mockRecord, qty: mockRecord.qty - 2 } as any);
-      jest.spyOn(orderRepository, 'create').mockResolvedValue(mockOrder as any);
+      jest.spyOn(orderRepository, 'create').mockResolvedValue({
+        _id: new mongoose.Types.ObjectId('60d0fe4f53115a001f7e0002'),
+        record: new mongoose.Types.ObjectId('60d0fe4f53115a001f7e0001'),
+        quantity: 2,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      } as any);
 
       const createOrderDto: CreateOrderRequestDTO = {
         recordId: 'recordId123',
@@ -115,7 +122,11 @@ describe('OrderService', () => {
       );
       const call = (orderRepository.create as jest.Mock).mock.calls[0][0];
       expect(call.record.toHexString()).toEqual('60d0fe4f53115a001f7e0001');
-      expect(result).toEqual(mockOrder);
+      expect(result).toEqual(OrderResponseDTO.fromEntity({
+        _id: new mongoose.Types.ObjectId('60d0fe4f53115a001f7e0002'),
+        record: new mongoose.Types.ObjectId('60d0fe4f53115a001f7e0001'),
+        quantity: 2,
+      } as any));
     });
 
     it('should throw NotFoundException if record not found', async () => {

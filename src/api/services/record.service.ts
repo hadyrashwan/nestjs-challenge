@@ -9,9 +9,9 @@ import { RecordFilterDTO } from '../dtos/record-filter.dto';
 import { UpdateRecordRequestDTO } from '../dtos/update-record.request.dto';
 import { REPOSITORY_ERROR_CODES } from '../errors/mongo-errors';
 import { RecordRepository } from '../repository/record.repository';
-import { Record } from '../schemas/record.schema';
 import { RecordData } from '../types/record.data-type';
 import { TracklistService } from '../tracklist/tracklist.service';
+import { RecordResponseDTO } from '../dtos/create-record.response.dto';
 
 @Injectable()
 export class RecordService {
@@ -20,7 +20,9 @@ export class RecordService {
     private readonly tracklistService: TracklistService,
   ) {}
 
-  async create(createRecordDto: CreateRecordRequestDTO): Promise<Record> {
+  async create(
+    createRecordDto: CreateRecordRequestDTO,
+  ): Promise<RecordResponseDTO> {
     const recordToCreate: RecordData = { ...createRecordDto };
 
     const tracklist = await this.tracklistService.addTrackList(
@@ -29,7 +31,8 @@ export class RecordService {
     recordToCreate.tracklist = tracklist || [];
 
     try {
-      return await this.recordRepository.create(recordToCreate);
+      const record = await this.recordRepository.create(recordToCreate);
+      return RecordResponseDTO.fromEntity(record);
     } catch (error) {
       if (error.code === REPOSITORY_ERROR_CODES.DUPLICATE_KEY) {
         throw new ConflictException(
@@ -43,7 +46,7 @@ export class RecordService {
   async update(
     id: string,
     updateRecordDto: UpdateRecordRequestDTO,
-  ): Promise<Record> {
+  ): Promise<RecordResponseDTO> {
     const existingRecord = await this.recordRepository.findById(id);
 
     if (!existingRecord) {
@@ -64,14 +67,16 @@ export class RecordService {
       throw new InternalServerErrorException('Record not found after update');
     }
 
-    return updated;
+    return RecordResponseDTO.fromEntity(updated);
   }
 
-  async findById(id: string): Promise<Record> {
-    return await this.recordRepository.findById(id);
+  async findById(id: string): Promise<RecordResponseDTO> {
+    const record = await this.recordRepository.findById(id);
+    return RecordResponseDTO.fromEntity(record);
   }
 
-  async findAll(filter: RecordFilterDTO): Promise<Record[]> {
-    return await this.recordRepository.findAll(filter);
+  async findAll(filter: RecordFilterDTO): Promise<RecordResponseDTO[]> {
+    const records = await this.recordRepository.findAll(filter);
+    return RecordResponseDTO.fromEntityArray(records);
   }
 }

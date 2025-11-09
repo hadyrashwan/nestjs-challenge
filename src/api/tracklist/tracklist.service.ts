@@ -4,6 +4,8 @@ import { firstValueFrom } from 'rxjs';
 import { retry } from 'rxjs/operators';
 import { parseStringPromise } from 'xml2js';
 
+const RETRY_ATTEMPTS = 3;
+
 @Injectable()
 export class TracklistService {
   constructor(private readonly httpService: HttpService) {}
@@ -30,7 +32,7 @@ export class TracklistService {
     const url = `https://beta.musicbrainz.org/ws/2/release/${mbid}?inc=recordings&fmt=xml`;
     try {
       const response = await firstValueFrom(
-        this.httpService.get(url).pipe(retry(3)),
+        this.httpService.get(url).pipe(retry(RETRY_ATTEMPTS)),
       );
       const xml = response.data;
       const parsed = await parseStringPromise(xml);

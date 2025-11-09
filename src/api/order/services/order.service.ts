@@ -5,10 +5,10 @@ import {
 } from '@nestjs/common';
 import { Connection, Types } from 'mongoose';
 import { InjectConnection } from '@nestjs/mongoose';
-import { Order } from '../schemas/order.schema';
 import { CreateOrderRequestDTO } from '../dtos/create-order.request.dto';
 import { OrderRepository } from '../repository/order.repository';
 import { RecordRepository } from '../../repository/record.repository';
+import { OrderResponseDTO } from '../dtos/create-order.response.dto';
 
 @Injectable()
 export class OrderService {
@@ -18,7 +18,9 @@ export class OrderService {
     @InjectConnection() private readonly connection: Connection,
   ) {}
 
-  async createOrder(createOrderDto: CreateOrderRequestDTO): Promise<Order> {
+  async createOrder(
+    createOrderDto: CreateOrderRequestDTO,
+  ): Promise<OrderResponseDTO> {
     const { recordId, quantity } = createOrderDto;
     const session = await this.connection.startSession();
     session.startTransaction();
@@ -51,7 +53,7 @@ export class OrderService {
       );
 
       await session.commitTransaction();
-      return newOrder;
+      return OrderResponseDTO.fromEntity(newOrder);
     } catch (error) {
       await session.abortTransaction();
       throw error;

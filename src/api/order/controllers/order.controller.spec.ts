@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { OrderController } from './order.controller';
 import { OrderService } from '../services/order.service';
 import { CreateOrderRequestDTO } from '../dtos/create-order.request.dto';
-import { Order } from '../schemas/order.schema';
+import { OrderResponseDTO } from '../dtos/create-order.response.dto';
 import {
   NotFoundException,
   BadRequestException,
@@ -40,11 +40,11 @@ describe('OrderController', () => {
         recordId: 'someRecordId',
         quantity: 1,
       };
-      const mockOrder: Order = {
+      const mockOrder: OrderResponseDTO = {
         id: 'someOrderId',
-        record: 'someRecordId' as any,
+        record: 'someRecordId',
         quantity: 1,
-      } as any; // Cast to any to bypass strict type checking for Mongoose Document properties
+      };
 
       jest.spyOn(service, 'createOrder').mockResolvedValue(mockOrder);
 
