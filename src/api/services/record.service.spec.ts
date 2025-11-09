@@ -1,6 +1,4 @@
-import { HttpService } from '@nestjs/axios';
 import { Test, TestingModule } from '@nestjs/testing';
-import { of, throwError } from 'rxjs';
 import { CreateRecordRequestDTO } from '../dtos/create-record.request.dto';
 import { RecordFilterDTO } from '../dtos/record-filter.dto';
 import { REPOSITORY_ERROR_CODES } from '../errors/mongo-errors';
@@ -8,11 +6,12 @@ import { RecordCategory, RecordFormat } from '../schemas/record.enum';
 import { RecordRepository } from '../repository/record.repository';
 import { RecordService } from './record.service';
 import { ConflictException } from '@nestjs/common';
+import { TracklistService } from '../tracklist/tracklist.service';
 
 describe('RecordService', () => {
   let recordService: RecordService;
   let recordRepository: RecordRepository;
-  let httpService: HttpService;
+  let tracklistService: TracklistService;
   let consoleErrorSpy: jest.SpyInstance;
 
   beforeEach(async () => {
@@ -30,17 +29,18 @@ describe('RecordService', () => {
           },
         },
         {
-          provide: HttpService,
-          useFactory: () => ({
-            get: jest.fn(),
-          }),
+          provide: TracklistService,
+          useValue: {
+            addTrackList: jest.fn(),
+            updateTrackList: jest.fn(),
+          },
         },
       ],
     }).compile();
 
     recordService = module.get<RecordService>(RecordService);
     recordRepository = module.get<RecordRepository>(RecordRepository);
-    httpService = module.get<HttpService>(HttpService);
+    tracklistService = module.get<TracklistService>(TracklistService);
   });
 
   afterEach(() => {
@@ -68,7 +68,10 @@ describe('RecordService', () => {
 
     const result = await recordService.create(createRecordDto);
     expect(result).toEqual(savedRecord);
-    expect(recordRepository.create).toHaveBeenCalledWith(createRecordDto);
+    expect(recordRepository.create).toHaveBeenCalledWith({
+      ...createRecordDto,
+      tracklist: undefined,
+    });
   });
 
   it('should create a new record with a tracklist from MusicBrainz', async () => {
@@ -82,45 +85,16 @@ describe('RecordService', () => {
       mbid: 'some-mbid',
     };
 
-    const musicBrainzResponse = `
-      <metadata>
-        <release>
-          <medium-list>
-            <medium>
-              <track-list>
-                <track>
-                  <recording>
-                    <title>Track 1</title>
-                  </recording>
-                </track>
-                <track>
-                  <recording>
-                    <title>Track 2</title>
-                  </recording>
-                </track>
-              </track-list>
-            </medium>
-          </medium-list>
-        </release>
-      </metadata>
-    `;
+    const tracklist = ['Track 1', 'Track 2'];
 
-    const axiosResponse = {
-      data: musicBrainzResponse,
-      status: 200,
-      statusText: 'OK',
-      headers: {},
-      config: {
-        headers: undefined,
-      },
-    };
-
-    jest.spyOn(httpService, 'get').mockReturnValue(of(axiosResponse));
+    jest
+      .spyOn(tracklistService, 'addTrackList')
+      .mockResolvedValue(tracklist);
 
     const savedRecord = {
       _id: '1',
       ...createRecordDto,
-      tracklist: ['Track 1', 'Track 2'],
+      tracklist,
     };
 
     jest
@@ -129,13 +103,13 @@ describe('RecordService', () => {
 
     const result = await recordService.create(createRecordDto);
 
-    expect(httpService.get).toHaveBeenCalledWith(
-      `https://beta.musicbrainz.org/ws/2/release/${createRecordDto.mbid}?inc=recordings&fmt=xml`,
+    expect(tracklistService.addTrackList).toHaveBeenCalledWith(
+      createRecordDto.mbid,
     );
-    expect(result.tracklist).toEqual(['Track 1', 'Track 2']);
+    expect(result.tracklist).toEqual(tracklist);
     expect(recordRepository.create).toHaveBeenCalledWith({
       ...createRecordDto,
-      tracklist: ['Track 1', 'Track 2'],
+      tracklist,
     });
   });
 
@@ -150,9 +124,7 @@ describe('RecordService', () => {
       mbid: 'some-mbid',
     };
 
-    jest
-      .spyOn(httpService, 'get')
-      .mockReturnValue(throwError(() => new Error('MusicBrainz API Error')));
+    jest.spyOn(tracklistService, 'addTrackList').mockResolvedValue(undefined);
 
     const savedRecord = {
       _id: '1',
@@ -166,7 +138,10 @@ describe('RecordService', () => {
     const result = await recordService.create(createRecordDto);
 
     expect(result).toEqual(savedRecord);
-    expect(recordRepository.create).toHaveBeenCalledWith(createRecordDto);
+    expect(recordRepository.create).toHaveBeenCalledWith({
+      ...createRecordDto,
+      tracklist: undefined,
+    });
   });
 
   it('should throw a conflict exception when creating a duplicate record', async () => {
