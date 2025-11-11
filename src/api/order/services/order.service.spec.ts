@@ -70,11 +70,13 @@ describe('OrderService', () => {
     orderRepository = module.get<OrderRepository>(OrderRepository);
     recordRepository = module.get<RecordRepository>(RecordRepository);
 
-    jest.spyOn(OrderResponseDTO, 'fromEntity').mockImplementation((order: any) => ({
-      id: order._id.toHexString(),
-      record: order.record.toHexString(),
-      quantity: order.quantity,
-    }));
+    jest
+      .spyOn(OrderResponseDTO, 'fromEntity')
+      .mockImplementation((order: any) => ({
+        id: order._id.toHexString(),
+        record: order.record.toHexString(),
+        quantity: order.quantity,
+      }));
   });
 
   it('should be defined', () => {
@@ -122,11 +124,13 @@ describe('OrderService', () => {
       );
       const call = (orderRepository.create as jest.Mock).mock.calls[0][0];
       expect(call.record.toHexString()).toEqual('60d0fe4f53115a001f7e0001');
-      expect(result).toEqual(OrderResponseDTO.fromEntity({
-        _id: new mongoose.Types.ObjectId('60d0fe4f53115a001f7e0002'),
-        record: new mongoose.Types.ObjectId('60d0fe4f53115a001f7e0001'),
-        quantity: 2,
-      } as any));
+      expect(result).toEqual(
+        OrderResponseDTO.fromEntity({
+          _id: new mongoose.Types.ObjectId('60d0fe4f53115a001f7e0002'),
+          record: new mongoose.Types.ObjectId('60d0fe4f53115a001f7e0001'),
+          quantity: 2,
+        } as any),
+      );
     });
 
     it('should throw NotFoundException if record not found', async () => {

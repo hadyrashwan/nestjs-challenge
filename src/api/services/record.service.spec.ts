@@ -11,7 +11,7 @@ import {
   InternalServerErrorException,
 } from '@nestjs/common';
 import { TracklistService } from '../tracklist/tracklist.service';
-import { RecordResponseDTO } from '../dtos/create-record.response.dto'; // Added import
+import { RecordResponseDTO } from '../dtos/create-record.response.dto';
 
 describe('RecordService', () => {
   let recordService: RecordService;

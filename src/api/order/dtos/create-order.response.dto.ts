@@ -1,5 +1,4 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Order } from '../schemas/order.schema';
 
 export class OrderResponseDTO {
   @ApiProperty({
@@ -24,8 +23,8 @@ export class OrderResponseDTO {
 
   static fromEntity(order: any): OrderResponseDTO {
     const dto = new OrderResponseDTO();
-    dto.id = order._id ? order._id.toString() : order.id; // Handle both _id and id
-    dto.record = order.record ? order.record.toString() : order.record; // Handle both ObjectId and string
+    dto.id = order._id ? order._id.toString() : order.id;
+    dto.record = order.record ? order.record.toString() : order.record;
     dto.quantity = order.quantity;
     return dto;
   }

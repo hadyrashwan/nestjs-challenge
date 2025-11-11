@@ -1,6 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { CreateRecordRequestDTO } from './create-record.request.dto';
-import { Record } from '../schemas/record.schema';
 
 export class RecordResponseDTO extends CreateRecordRequestDTO {
   @ApiProperty({
@@ -19,7 +18,7 @@ export class RecordResponseDTO extends CreateRecordRequestDTO {
 
   static fromEntity(record: any): RecordResponseDTO {
     const dto = new RecordResponseDTO();
-    dto.id = record._id ? record._id.toString() : record.id; // Handle both _id and id
+    dto.id = record._id ? record._id.toString() : record.id;
     dto.artist = record.artist;
     dto.album = record.album;
     dto.price = record.price;
