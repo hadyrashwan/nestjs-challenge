@@ -560,7 +560,7 @@ describe('RecordController (e2e)', () => {
       .get('/records?limit=invalid')
       .expect(400);
 
-    expect(response.body.message).toContain('Limit must be a positive integer');
+    expect(response.body.message).toContain('limit must be an integer number');
   });
 
   it('should handle negative limit parameter', async () => {
@@ -568,7 +568,7 @@ describe('RecordController (e2e)', () => {
       .get('/records?limit=-5')
       .expect(400);
 
-    expect(response.body.message).toContain('Limit must be a positive integer');
+    expect(response.body.message[0]).toContain('limit must not be less than ');
   });
 
   it('should combine pagination and filters', async () => {

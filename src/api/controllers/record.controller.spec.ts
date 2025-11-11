@@ -73,7 +73,10 @@ describe('RecordController', () => {
       hasNextPage: false,
     });
 
-    const result = await recordController.findAll(filter, '10', undefined);
+    const result = await recordController.findAll(filter, {
+      limit: 10,
+      cursor: undefined,
+    });
     expect(result).toEqual({
       data: records,
       nextCursor: null,

@@ -1,13 +1,4 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Param,
-  Query,
-  Put,
-  BadRequestException,
-} from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Query, Put } from '@nestjs/common';
 import { ApiOperation, ApiQuery, ApiResponse } from '@nestjs/swagger';
 import { CreateRecordRequestDTO } from '../dtos/create-record.request.dto';
 import { UpdateRecordRequestDTO } from '../dtos/update-record.request.dto';
@@ -79,24 +70,8 @@ export class RecordController {
   })
   async findAll(
     @Query() filter: RecordFilterDTO,
-    @Query('limit') limit?: string,
-    @Query('cursor') cursor?: string,
+    @Query() pagination: RecordPaginationDTO,
   ): Promise<PaginatedRecordResponseDTO> {
-    // Validate and parse the parameters
-    let limitValue = 10; // default
-    if (limit !== undefined) {
-      const parsedLimit = parseInt(limit, 10);
-      if (isNaN(parsedLimit) || parsedLimit < 1) {
-        throw new BadRequestException('Limit must be a positive integer');
-      }
-      limitValue = Math.min(parsedLimit, 100); // cap at 100
-    }
-
-    const pagination: RecordPaginationDTO = {
-      limit: limitValue,
-      cursor: cursor || undefined,
-    };
-
     return await this.recordService.findAllWithPagination(filter, pagination);
   }
 }
