@@ -1,35 +1,34 @@
+import { HttpModule } from '@nestjs/axios';
 import { Test, TestingModule } from '@nestjs/testing';
-import { RecordController } from './record.controller';
-import { getModelToken } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
-import { Record } from '../schemas/record.schema';
 import { CreateRecordRequestDTO } from '../dtos/create-record.request.dto';
+import { RecordFilterDTO } from '../dtos/record-filter.dto';
 import { RecordCategory, RecordFormat } from '../schemas/record.enum';
+import { InternalServerErrorException } from '@nestjs/common';
+import { RecordService } from '../services/record.service';
+import { RecordController } from './record.controller';
 
 describe('RecordController', () => {
   let recordController: RecordController;
-  let recordModel: Model<Record>;
+  let recordService: RecordService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [RecordController],
       providers: [
         {
-          provide: getModelToken('Record'),
+          provide: RecordService,
           useValue: {
-            new: jest.fn().mockResolvedValue({}),
-            constructor: jest.fn().mockResolvedValue({}),
-            find: jest.fn(),
-            findById: jest.fn(),
-            save: jest.fn(),
             create: jest.fn(),
+            findAll: jest.fn(),
+            update: jest.fn(),
           },
         },
       ],
+      imports: [HttpModule],
     }).compile();
 
     recordController = module.get<RecordController>(RecordController);
-    recordModel = module.get<Model<Record>>(getModelToken('Record'));
+    recordService = module.get<RecordService>(RecordService);
   });
 
   it('should create a new record', async () => {
@@ -44,23 +43,19 @@ describe('RecordController', () => {
 
     const savedRecord = {
       _id: '1',
-      name: 'Test Record',
-      price: 100,
-      qty: 10,
-    };
-
-    jest.spyOn(recordModel, 'create').mockResolvedValue(savedRecord as any);
-
-    const result = await recordController.create(createRecordDto);
-    expect(result).toEqual(savedRecord);
-    expect(recordModel.create).toHaveBeenCalledWith({
       artist: 'Test',
       album: 'Test Record',
       price: 100,
       qty: 10,
-      category: RecordCategory.ALTERNATIVE,
       format: RecordFormat.VINYL,
-    });
+      category: RecordCategory.ALTERNATIVE,
+    };
+
+    jest.spyOn(recordService, 'create').mockResolvedValue(savedRecord as any);
+
+    const result = await recordController.create(createRecordDto);
+    expect(result).toEqual(savedRecord);
+    expect(recordService.create).toHaveBeenCalledWith(createRecordDto);
   });
 
   it('should return an array of records', async () => {
@@ -69,12 +64,24 @@ describe('RecordController', () => {
       { _id: '2', name: 'Record 2', price: 200, qty: 20 },
     ];
 
-    jest.spyOn(recordModel, 'find').mockReturnValue({
-      exec: jest.fn().mockResolvedValue(records),
-    } as any);
+    const filter: RecordFilterDTO = {};
 
-    const result = await recordController.findAll();
+    jest.spyOn(recordService, 'findAll').mockResolvedValue(records as any);
+
+    const result = await recordController.findAll(filter);
     expect(result).toEqual(records);
-    expect(recordModel.find).toHaveBeenCalled();
+    expect(recordService.findAll).toHaveBeenCalledWith(filter);
+  });
+
+  it('should throw InternalServerErrorException when recordService.update throws InternalServerErrorException', async () => {
+    const recordId = 'someId';
+    const updateRecordDto = { artist: 'Updated Artist' };
+    jest
+      .spyOn(recordService, 'update')
+      .mockRejectedValue(new InternalServerErrorException());
+
+    await expect(
+      recordController.update({ id: recordId }, updateRecordDto),
+    ).rejects.toThrow(new InternalServerErrorException());
   });
 });
