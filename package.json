@@ -83,7 +83,8 @@
       "src/.*\\.module\\.ts",
       "src/.*\\.config\\.ts",
       "src/main\\.ts",
-      "src/api/schemas/record\\.schema\\.ts"
+      ".*dto\\.ts$",
+      ".*schema\\.ts$"
     ]
   }
 }
