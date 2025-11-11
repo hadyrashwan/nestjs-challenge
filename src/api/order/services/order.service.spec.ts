@@ -11,7 +11,7 @@ import mongoose from 'mongoose';
 import { OrderRepository } from '../repository/order.repository';
 import { RecordRepository } from '../../repository/record.repository';
 import { getConnectionToken } from '@nestjs/mongoose';
-import { OrderResponseDTO } from '../dtos/create-order.response.dto'; // Added import
+import { OrderResponseDTO } from '../dtos/create-order.response.dto';
 
 describe('OrderService', () => {
   let service: OrderService;

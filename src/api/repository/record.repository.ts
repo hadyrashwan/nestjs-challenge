@@ -15,9 +15,13 @@ export class RecordRepository {
     return await this.recordModel.create(data);
   }
 
-  async findAll(filter: RecordFilterDTO): Promise<Record[]> {
+  async findAllWithPagination(
+    filter: RecordFilterDTO,
+    options: { limit: number; cursor?: string },
+  ): Promise<Record[]> {
     const mongoFilter: FilterQuery<Record> = {};
 
+    // Apply the same filter logic as findAll
     if (filter.q) {
       mongoFilter.$or = [
         { artist: { $regex: filter.q, $options: 'i' } },
@@ -42,7 +46,15 @@ export class RecordRepository {
       mongoFilter.category = filter.category;
     }
 
-    return await this.recordModel.find(mongoFilter).exec();
+    if (options.cursor) {
+      mongoFilter._id = { $gt: options.cursor };
+    }
+
+    return await this.recordModel
+      .find(mongoFilter)
+      .sort({ _id: 1 })
+      .limit(options.limit)
+      .exec();
   }
 
   async findById(

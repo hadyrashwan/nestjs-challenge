@@ -71,10 +71,15 @@ describe('RecordController (e2e)', () => {
       .get('/records?artist=The Fake Band')
       .expect(200);
 
-    expect(mongoose.Types.ObjectId.isValid(response.body[0].id)).toBe(true);
-    expect(createResponse.body.id).toEqual(response.body[0].id);
-    expect(response.body.length).toBe(1);
-    expect(response.body[0]).toHaveProperty('artist', 'The Fake Band');
+    expect(Array.isArray(response.body.data)).toBe(true);
+    expect(mongoose.Types.ObjectId.isValid(response.body.data[0].id)).toBe(
+      true,
+    );
+    expect(createResponse.body.id).toEqual(response.body.data[0].id);
+    expect(response.body.data.length).toBe(1);
+    expect(response.body.data[0]).toHaveProperty('artist', 'The Fake Band');
+    expect(response.body).toHaveProperty('hasNextPage');
+    expect(response.body).toHaveProperty('nextCursor');
   });
 
   it('should filter records by album', async () => {
@@ -96,8 +101,8 @@ describe('RecordController (e2e)', () => {
       .get('/records?album=The Test Album')
       .expect(200);
 
-    expect(response.body.length).toBe(1);
-    expect(response.body[0]).toHaveProperty('album', 'The Test Album');
+    expect(response.body.data.length).toBe(1);
+    expect(response.body.data[0]).toHaveProperty('album', 'The Test Album');
   });
 
   it('should filter records by format', async () => {
@@ -119,8 +124,8 @@ describe('RecordController (e2e)', () => {
       .get(`/records?format=${RecordFormat.CD}`)
       .expect(200);
 
-    expect(response.body.length).toBe(1);
-    expect(response.body[0]).toHaveProperty('format', RecordFormat.CD);
+    expect(response.body.data.length).toBe(1);
+    expect(response.body.data[0]).toHaveProperty('format', RecordFormat.CD);
   });
 
   it('should filter records by category', async () => {
@@ -142,8 +147,11 @@ describe('RecordController (e2e)', () => {
       .get(`/records?category=${RecordCategory.JAZZ}`)
       .expect(200);
 
-    expect(response.body.length).toBe(1);
-    expect(response.body[0]).toHaveProperty('category', RecordCategory.JAZZ);
+    expect(response.body.data.length).toBe(1);
+    expect(response.body.data[0]).toHaveProperty(
+      'category',
+      RecordCategory.JAZZ,
+    );
   });
 
   it('should search records by query', async () => {
@@ -165,8 +173,11 @@ describe('RecordController (e2e)', () => {
       .get('/records?q=Searchable art')
       .expect(200);
 
-    expect(response.body.length).toBe(1);
-    expect(response.body[0]).toHaveProperty('artist', 'The Searchable Artist');
+    expect(response.body.data.length).toBe(1);
+    expect(response.body.data[0]).toHaveProperty(
+      'artist',
+      'The Searchable Artist',
+    );
   });
 
   it('should combine filters correctly', async () => {
@@ -188,9 +199,12 @@ describe('RecordController (e2e)', () => {
       .get(`/records?artist=The Combo Artist&category=${RecordCategory.HIPHOP}`)
       .expect(200);
 
-    expect(response.body.length).toBe(1);
-    expect(response.body[0]).toHaveProperty('artist', 'The Combo Artist');
-    expect(response.body[0]).toHaveProperty('category', RecordCategory.HIPHOP);
+    expect(response.body.data.length).toBe(1);
+    expect(response.body.data[0]).toHaveProperty('artist', 'The Combo Artist');
+    expect(response.body.data[0]).toHaveProperty(
+      'category',
+      RecordCategory.HIPHOP,
+    );
   });
 
   it('should return 404 when updating a non-existent record', async () => {
@@ -409,6 +423,194 @@ describe('RecordController (e2e)', () => {
       .expect(200);
 
     expect(updateResponse.body.tracklist).toEqual(originalTracklist);
+  });
+
+  it('should return paginated records with default limit when no pagination params provided', async () => {
+    const records = [];
+    for (let i = 0; i < 5; i++) {
+      const createRecordDto = {
+        artist: `Artist ${i}`,
+        album: `Album ${i}`,
+        price: 25,
+        qty: 10,
+        format: RecordFormat.VINYL,
+        category: RecordCategory.ROCK,
+      };
+
+      const response = await request(app.getHttpServer())
+        .post('/records')
+        .send(createRecordDto)
+        .expect(201);
+
+      records.push(response.body);
+    }
+
+    const response = await request(app.getHttpServer())
+      .get('/records')
+      .expect(200);
+
+    expect(response.body).toHaveProperty('data');
+    expect(response.body).toHaveProperty('hasNextPage');
+    expect(response.body).toHaveProperty('nextCursor');
+    expect(Array.isArray(response.body.data)).toBe(true);
+    expect(response.body.data.length).toBeGreaterThanOrEqual(1);
+    expect(response.body.hasNextPage).toBe(false);
+    expect(response.body.nextCursor).toBeNull();
+  });
+
+  it('should return paginated results with custom limit', async () => {
+    const records = [];
+    for (let i = 0; i < 5; i++) {
+      const createRecordDto = {
+        artist: `Paginated Artist ${i}`,
+        album: `Paginated Album ${i}`,
+        price: 25,
+        qty: 10,
+        format: RecordFormat.VINYL,
+        category: RecordCategory.ROCK,
+      };
+
+      const response = await request(app.getHttpServer())
+        .post('/records')
+        .send(createRecordDto)
+        .expect(201);
+
+      records.push(response.body);
+    }
+
+    const response = await request(app.getHttpServer())
+      .get('/records?limit=2')
+      .expect(200);
+
+    expect(response.body).toHaveProperty('data');
+    expect(response.body.data.length).toBe(2);
+    expect(response.body.hasNextPage).toBe(true);
+    expect(response.body.nextCursor).not.toBeNull();
+  });
+
+  it('should return paginated results with cursor-based pagination', async () => {
+    const records = [];
+    for (let i = 0; i < 5; i++) {
+      const createRecordDto = {
+        artist: `Cursor Artist ${i}`,
+        album: `Cursor Album ${i}`,
+        price: 25,
+        qty: 10,
+        format: RecordFormat.VINYL,
+        category: RecordCategory.ROCK,
+      };
+
+      const response = await request(app.getHttpServer())
+        .post('/records')
+        .send(createRecordDto)
+        .expect(201);
+
+      records.push(response.body);
+    }
+
+    const firstPageResponse = await request(app.getHttpServer())
+      .get('/records?limit=2')
+      .expect(200);
+
+    expect(firstPageResponse.body.data.length).toBe(2);
+    expect(firstPageResponse.body.hasNextPage).toBe(true);
+    expect(firstPageResponse.body.nextCursor).not.toBeNull();
+
+    const secondPageResponse = await request(app.getHttpServer())
+      .get(`/records?limit=2&cursor=${firstPageResponse.body.nextCursor}`)
+      .expect(200);
+
+    expect(secondPageResponse.body.data.length).toBe(2);
+    expect(secondPageResponse.body.data[0].artist).not.toEqual(
+      firstPageResponse.body.data[0].artist,
+    );
+    expect(secondPageResponse.body.data[0].artist).not.toEqual(
+      firstPageResponse.body.data[1].artist,
+    );
+    expect(secondPageResponse.body.hasNextPage).toBe(true);
+  });
+
+  it('should cap the limit at 100', async () => {
+    for (let i = 0; i < 5; i++) {
+      const createRecordDto = {
+        artist: `Limit Test Artist ${i}`,
+        album: `Limit Test Album ${i}`,
+        price: 25,
+        qty: 10,
+        format: RecordFormat.VINYL,
+        category: RecordCategory.ROCK,
+      };
+
+      await request(app.getHttpServer())
+        .post('/records')
+        .send(createRecordDto)
+        .expect(201);
+    }
+
+    const response = await request(app.getHttpServer())
+      .get('/records?limit=200')
+      .expect(200);
+
+    expect(response.body).toHaveProperty('data');
+    expect(response.body.data.length).toBeLessThanOrEqual(100);
+  });
+
+  it('should handle invalid limit parameter', async () => {
+    const response = await request(app.getHttpServer())
+      .get('/records?limit=invalid')
+      .expect(400);
+
+    expect(response.body.message).toContain('limit must be an integer number');
+  });
+
+  it('should handle negative limit parameter', async () => {
+    const response = await request(app.getHttpServer())
+      .get('/records?limit=-5')
+      .expect(400);
+
+    expect(response.body.message[0]).toContain('limit must not be less than ');
+  });
+
+  it('should combine pagination and filters', async () => {
+    for (let i = 0; i < 3; i++) {
+      const createRecordDto = {
+        artist: `Filtered Artist ${i}`,
+        album: `Filtered Album ${i}`,
+        price: 25,
+        qty: 10,
+        format: RecordFormat.VINYL,
+        category: RecordCategory.ROCK,
+      };
+
+      await request(app.getHttpServer())
+        .post('/records')
+        .send(createRecordDto)
+        .expect(201);
+    }
+
+    for (let i = 0; i < 3; i++) {
+      const createRecordDto = {
+        artist: `Jazz Artist ${i}`,
+        album: `Jazz Album ${i}`,
+        price: 25,
+        qty: 10,
+        format: RecordFormat.VINYL,
+        category: RecordCategory.JAZZ,
+      };
+
+      await request(app.getHttpServer())
+        .post('/records')
+        .send(createRecordDto)
+        .expect(201);
+    }
+
+    const response = await request(app.getHttpServer())
+      .get(`/records?limit=2&category=${RecordCategory.JAZZ}`)
+      .expect(200);
+
+    expect(response.body).toHaveProperty('data');
+    expect(response.body.data.length).toBe(2);
+    expect(response.body.data[0].category).toBe(RecordCategory.JAZZ);
   });
 
   afterEach(async () => {

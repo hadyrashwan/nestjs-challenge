@@ -19,6 +19,8 @@
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json --detectOpenHandles --forceExit",
+    "test:100k-e2e": "NODE_ENV=100K_E2E_TEST jest --config ./test/jest-100k-e2e.json --detectOpenHandles --forceExit",
+    "setup:100k-db": "NODE_ENV=100K_E2E_TEST ts-node -r tsconfig-paths/register setup-db-100k.ts ",
     "setup:db": "ts-node -r tsconfig-paths/register setup-db.ts"
   },
   "dependencies": {
@@ -81,7 +83,8 @@
       "src/.*\\.module\\.ts",
       "src/.*\\.config\\.ts",
       "src/main\\.ts",
-      "src/api/schemas/record\\.schema\\.ts"
+      ".*dto\\.ts$",
+      ".*schema\\.ts$"
     ]
   }
 }

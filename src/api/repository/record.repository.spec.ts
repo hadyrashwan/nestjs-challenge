@@ -54,95 +54,6 @@ describe('RecordRepository', () => {
     });
   });
 
-  describe('findAll', () => {
-    it('should return all records if no filter is provided', async () => {
-      jest.spyOn(model, 'find').mockReturnValue({
-        exec: jest.fn().mockResolvedValue([mockRecord]),
-      } as any);
-      const result = await repository.findAll({});
-      expect(result).toEqual([mockRecord]);
-      expect(model.find).toHaveBeenCalledWith({});
-    });
-
-    it('should filter by artist', async () => {
-      const filter: RecordFilterDTO = { artist: 'Test Artist' };
-      jest.spyOn(model, 'find').mockReturnValue({
-        exec: jest.fn().mockResolvedValue([mockRecord]),
-      } as any);
-      const result = await repository.findAll(filter);
-      expect(result).toEqual([mockRecord]);
-      expect(model.find).toHaveBeenCalledWith({
-        artist: { $regex: 'Test Artist', $options: 'i' },
-      });
-    });
-
-    it('should filter by album', async () => {
-      const filter: RecordFilterDTO = { album: 'Test Album' };
-      jest.spyOn(model, 'find').mockReturnValue({
-        exec: jest.fn().mockResolvedValue([mockRecord]),
-      } as any);
-      const result = await repository.findAll(filter);
-      expect(result).toEqual([mockRecord]);
-      expect(model.find).toHaveBeenCalledWith({
-        album: { $regex: 'Test Album', $options: 'i' },
-      });
-    });
-
-    it('should filter by format', async () => {
-      const filter: RecordFilterDTO = { format: RecordFormat.VINYL };
-      jest.spyOn(model, 'find').mockReturnValue({
-        exec: jest.fn().mockResolvedValue([mockRecord]),
-      } as any);
-      const result = await repository.findAll(filter);
-      expect(result).toEqual([mockRecord]);
-      expect(model.find).toHaveBeenCalledWith({ format: RecordFormat.VINYL });
-    });
-
-    it('should filter by category', async () => {
-      const filter: RecordFilterDTO = { category: RecordCategory.ROCK };
-      jest.spyOn(model, 'find').mockReturnValue({
-        exec: jest.fn().mockResolvedValue([mockRecord]),
-      } as any);
-      const result = await repository.findAll(filter);
-      expect(result).toEqual([mockRecord]);
-      expect(model.find).toHaveBeenCalledWith({
-        category: RecordCategory.ROCK,
-      });
-    });
-
-    it('should filter by q (search query)', async () => {
-      const filter: RecordFilterDTO = { q: 'Test' };
-      jest.spyOn(model, 'find').mockReturnValue({
-        exec: jest.fn().mockResolvedValue([mockRecord]),
-      } as any);
-      const result = await repository.findAll(filter);
-      expect(result).toEqual([mockRecord]);
-      expect(model.find).toHaveBeenCalledWith({
-        $or: [
-          { artist: { $regex: 'Test', $options: 'i' } },
-          { album: { $regex: 'Test', $options: 'i' } },
-          { category: { $regex: 'Test', $options: 'i' } },
-        ],
-      });
-    });
-
-    it('should combine filters', async () => {
-      const filter: RecordFilterDTO = {
-        artist: 'Test Artist',
-        category: RecordCategory.ROCK,
-      };
-      jest.spyOn(model, 'find').mockReturnValue({
-        exec: jest.fn().mockResolvedValue([mockRecord]),
-      } as any);
-      const result = await repository.findAll(filter);
-      expect(result).toEqual([mockRecord]);
-      expect(model.find).toHaveBeenCalledWith({
-        artist: { $regex: 'Test Artist', $options: 'i' },
-        category: RecordCategory.ROCK,
-      });
-    });
-  });
-
   describe('findById', () => {
     it('should find a record by id', async () => {
       jest.spyOn(model, 'findById').mockReturnValue({
@@ -192,6 +103,86 @@ describe('RecordRepository', () => {
         { price: 20 },
         { new: true },
       );
+    });
+  });
+
+  describe('findAllWithPagination', () => {
+    it('should return records with default sorting and limit when no cursor provided', async () => {
+      const filter: RecordFilterDTO = {};
+      const options = { limit: 10 };
+      jest.spyOn(model, 'find').mockReturnValue({
+        sort: jest.fn().mockReturnThis(),
+        limit: jest.fn().mockReturnThis(),
+        exec: jest.fn().mockResolvedValue([mockRecord]),
+      } as any);
+
+      const result = await repository.findAllWithPagination(filter, options);
+      expect(result).toEqual([mockRecord]);
+      expect(model.find).toHaveBeenCalledWith({});
+      expect(model.find().sort).toHaveBeenCalledWith({ _id: 1 });
+      expect(model.find().sort().limit).toHaveBeenCalledWith(10);
+    });
+
+    it('should apply cursor filter when cursor is provided', async () => {
+      const filter: RecordFilterDTO = {};
+      const options = { limit: 10, cursor: '5' };
+      jest.spyOn(model, 'find').mockReturnValue({
+        sort: jest.fn().mockReturnThis(),
+        limit: jest.fn().mockReturnThis(),
+        exec: jest.fn().mockResolvedValue([mockRecord]),
+      } as any);
+
+      const result = await repository.findAllWithPagination(filter, options);
+      expect(result).toEqual([mockRecord]);
+      expect(model.find).toHaveBeenCalledWith({ _id: { $gt: '5' } });
+    });
+
+    it('should apply combined filter with cursor', async () => {
+      const filter: RecordFilterDTO = { artist: 'Test Artist' };
+      const options = { limit: 10, cursor: '5' };
+      jest.spyOn(model, 'find').mockReturnValue({
+        sort: jest.fn().mockReturnThis(),
+        limit: jest.fn().mockReturnThis(),
+        exec: jest.fn().mockResolvedValue([mockRecord]),
+      } as any);
+
+      const result = await repository.findAllWithPagination(filter, options);
+      expect(result).toEqual([mockRecord]);
+      expect(model.find).toHaveBeenCalledWith({
+        artist: { $regex: 'Test Artist', $options: 'i' },
+        _id: { $gt: '5' },
+      });
+    });
+
+    it('should apply all filter conditions with cursor', async () => {
+      const filter: RecordFilterDTO = {
+        q: 'search',
+        artist: 'Test Artist',
+        album: 'Test Album',
+        format: RecordFormat.VINYL,
+        category: RecordCategory.ROCK,
+      };
+      const options = { limit: 10, cursor: '5' };
+      jest.spyOn(model, 'find').mockReturnValue({
+        sort: jest.fn().mockReturnThis(),
+        limit: jest.fn().mockReturnThis(),
+        exec: jest.fn().mockResolvedValue([mockRecord]),
+      } as any);
+
+      const result = await repository.findAllWithPagination(filter, options);
+      expect(result).toEqual([mockRecord]);
+      expect(model.find).toHaveBeenCalledWith({
+        $or: [
+          { artist: { $regex: 'search', $options: 'i' } },
+          { album: { $regex: 'search', $options: 'i' } },
+          { category: { $regex: 'search', $options: 'i' } },
+        ],
+        artist: { $regex: 'Test Artist', $options: 'i' },
+        album: { $regex: 'Test Album', $options: 'i' },
+        format: RecordFormat.VINYL,
+        category: RecordCategory.ROCK,
+        _id: { $gt: '5' },
+      });
     });
   });
 });

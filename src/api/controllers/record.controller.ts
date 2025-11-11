@@ -6,6 +6,8 @@ import { RecordService } from '../services/record.service';
 import { RecordFilterDTO } from '../dtos/record-filter.dto';
 import { RecordIdParamDTO } from '../dtos/record-id-param.dto';
 import { RecordResponseDTO } from '../dtos/create-record.response.dto';
+import { RecordPaginationDTO } from '../dtos/record-pagination.dto';
+import { PaginatedRecordResponseDTO } from '../dtos/paginated-record.response.dto';
 
 @Controller('records')
 export class RecordController {
@@ -44,16 +46,32 @@ export class RecordController {
   }
 
   @Get()
-  @ApiOperation({ summary: 'Get all records with optional filters' })
+  @ApiOperation({
+    summary: 'Get all records with optional filters and pagination',
+  })
   @ApiResponse({
     status: 200,
-    description: 'List of records',
-    type: [RecordResponseDTO],
+    description: 'List of records with pagination metadata',
+    type: PaginatedRecordResponseDTO,
   })
   @ApiQuery({ type: RecordFilterDTO })
+  @ApiQuery({
+    name: 'limit',
+    type: Number,
+    required: false,
+    description: 'Number of records to return (default: 10, max: 100)',
+  })
+  @ApiQuery({
+    name: 'cursor',
+    type: String,
+    required: false,
+    description:
+      'Cursor for pagination (ID of the last record from previous page)',
+  })
   async findAll(
     @Query() filter: RecordFilterDTO,
-  ): Promise<RecordResponseDTO[]> {
-    return await this.recordService.findAll(filter);
+    @Query() pagination: RecordPaginationDTO,
+  ): Promise<PaginatedRecordResponseDTO> {
+    return await this.recordService.findAllWithPagination(filter, pagination);
   }
 }
