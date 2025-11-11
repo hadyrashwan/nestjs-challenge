@@ -40,7 +40,6 @@ describe('RecordService', () => {
           provide: RecordRepository,
           useValue: {
             create: jest.fn(),
-            findAll: jest.fn(),
             findAllWithPagination: jest.fn(),
             findById: jest.fn(),
             update: jest.fn(),
@@ -207,41 +206,6 @@ describe('RecordService', () => {
         'Record with the same artist, album, and format already exists.',
       ),
     );
-  });
-
-  it('should return an array of records', async () => {
-    const records = [
-      {
-        _id: '1',
-        artist: 'Artist 1',
-        album: 'Album 1',
-        price: 100,
-        qty: 10,
-        format: RecordFormat.VINYL,
-        category: RecordCategory.ROCK,
-        mbid: undefined,
-        tracklist: undefined,
-      },
-      {
-        _id: '2',
-        artist: 'Artist 2',
-        album: 'Album 2',
-        price: 200,
-        qty: 20,
-        format: RecordFormat.CD,
-        category: RecordCategory.POP,
-        mbid: undefined,
-        tracklist: undefined,
-      },
-    ];
-
-    const filter: RecordFilterDTO = {};
-
-    jest.spyOn(recordRepository, 'findAll').mockResolvedValue(records as any);
-
-    const result = await recordService.findAll(filter);
-    expect(result).toEqual(RecordResponseDTO.fromEntityArray(records));
-    expect(recordRepository.findAll).toHaveBeenCalledWith(filter);
   });
 
   describe('update', () => {

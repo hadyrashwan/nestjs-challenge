@@ -15,38 +15,6 @@ export class RecordRepository {
     return await this.recordModel.create(data);
   }
 
-  async findAll(filter: RecordFilterDTO): Promise<Record[]> {
-    const mongoFilter: FilterQuery<Record> = {};
-
-    // TODO: Use $search aggregation (Atlas search) when available.
-    // https://www.mongodb.com/docs/atlas/atlas-search/tutorial/?deployment-type=atlas&language-atlas-only-2=atlas-ui
-    if (filter.q) {
-      mongoFilter.$or = [
-        { artist: { $regex: filter.q, $options: 'i' } },
-        { album: { $regex: filter.q, $options: 'i' } },
-        { category: { $regex: filter.q, $options: 'i' } },
-      ];
-    }
-
-    if (filter.artist) {
-      mongoFilter.artist = { $regex: filter.artist, $options: 'i' };
-    }
-
-    if (filter.album) {
-      mongoFilter.album = { $regex: filter.album, $options: 'i' };
-    }
-
-    if (filter.format) {
-      mongoFilter.format = filter.format;
-    }
-
-    if (filter.category) {
-      mongoFilter.category = filter.category;
-    }
-
-    return await this.recordModel.find(mongoFilter).exec();
-  }
-
   async findAllWithPagination(
     filter: RecordFilterDTO,
     options: { limit: number; cursor?: string },

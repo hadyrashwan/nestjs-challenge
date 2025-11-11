@@ -19,7 +19,6 @@ describe('RecordController', () => {
           provide: RecordService,
           useValue: {
             create: jest.fn(),
-            findAll: jest.fn(),
             findAllWithPagination: jest.fn(),
             update: jest.fn(),
           },

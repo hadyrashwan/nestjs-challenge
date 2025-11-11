@@ -77,11 +77,6 @@ export class RecordService {
     return RecordResponseDTO.fromEntity(record);
   }
 
-  async findAll(filter: RecordFilterDTO): Promise<RecordResponseDTO[]> {
-    const records = await this.recordRepository.findAll(filter);
-    return RecordResponseDTO.fromEntityArray(records);
-  }
-
   async findAllWithPagination(
     filter: RecordFilterDTO,
     pagination: RecordPaginationDTO,
