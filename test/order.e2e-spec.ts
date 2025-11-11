@@ -42,7 +42,6 @@ describe('OrderController (e2e)', () => {
   });
 
   it('should create a new order', async () => {
-    // Create a record first
     const createRecordDto = {
       artist: 'Order Test Artist',
       album: 'Order Test Album',
@@ -72,11 +71,10 @@ describe('OrderController (e2e)', () => {
     expect(orderResponse.body).toHaveProperty('record', recordId);
     expect(orderResponse.body).toHaveProperty('quantity', 2);
 
-    // Verify record quantity is updated
     const updatedRecord = await request(app.getHttpServer())
       .get(`/records?id=${recordId}`)
       .expect(200);
-    expect(updatedRecord.body[0]).toHaveProperty('qty', 8);
+    expect(updatedRecord.body.data[0]).toHaveProperty('qty', 8);
   });
 
   it('should return 404 if record not found for order', async () => {
@@ -92,7 +90,6 @@ describe('OrderController (e2e)', () => {
   });
 
   it('should return 400 if not enough quantity for order', async () => {
-    // Create a record first
     const createRecordDto = {
       artist: 'Order Test Artist 2',
       album: 'Order Test Album 2',
@@ -110,7 +107,7 @@ describe('OrderController (e2e)', () => {
 
     const createOrderDto = {
       recordId: recordId,
-      quantity: 10, // More than available
+      quantity: 10,
     };
 
     await request(app.getHttpServer())
@@ -121,8 +118,8 @@ describe('OrderController (e2e)', () => {
 
   it('should return 400 if invalid data provided for order', async () => {
     const createOrderDto = {
-      recordId: 'invalid-id', // Invalid Mongo ID
-      quantity: 0, // Invalid quantity
+      recordId: 'invalid-id',
+      quantity: 0,
     };
 
     await request(app.getHttpServer())

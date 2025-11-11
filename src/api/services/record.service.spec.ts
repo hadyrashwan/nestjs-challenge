@@ -41,6 +41,7 @@ describe('RecordService', () => {
           useValue: {
             create: jest.fn(),
             findAll: jest.fn(),
+            findAllWithPagination: jest.fn(),
             findById: jest.fn(),
             update: jest.fn(),
             deductQuantity: jest.fn(),
@@ -350,6 +351,106 @@ describe('RecordService', () => {
       await expect(recordService.update('1', updateRecordDto)).rejects.toThrow(
         new InternalServerErrorException('Record not found after update'),
       );
+    });
+  });
+
+  describe('findAllWithPagination', () => {
+    it('should return paginated records with default limit when no pagination params provided', async () => {
+      const filter: RecordFilterDTO = {};
+      const records = [
+        { _id: '1', name: 'Record 1', price: 100, qty: 10 },
+        { _id: '2', name: 'Record 2', price: 200, qty: 20 },
+        { _id: '3', name: 'Record 3', price: 300, qty: 30 },
+      ];
+
+      jest
+        .spyOn(recordRepository, 'findAllWithPagination')
+        .mockResolvedValue(records as any);
+
+      const result = await recordService.findAllWithPagination(filter, {
+        limit: 10,
+      });
+      expect(result.data).toEqual(RecordResponseDTO.fromEntityArray(records));
+      expect(result.hasNextPage).toBe(false);
+      expect(result.nextCursor).toBeNull();
+      expect(recordRepository.findAllWithPagination).toHaveBeenCalledWith(
+        filter,
+        { limit: 11, cursor: undefined },
+      );
+    });
+
+    it('should return paginated records with hasNextPage true when more records exist than limit', async () => {
+      const filter: RecordFilterDTO = {};
+      const records = [
+        { _id: '1', name: 'Record 1', price: 100, qty: 10 },
+        { _id: '2', name: 'Record 2', price: 200, qty: 20 },
+        { _id: '3', name: 'Record 3', price: 300, qty: 30 },
+        { _id: '4', name: 'Record 4', price: 400, qty: 40 },
+      ];
+
+      jest
+        .spyOn(recordRepository, 'findAllWithPagination')
+        .mockResolvedValue(records as any);
+
+      const result = await recordService.findAllWithPagination(filter, {
+        limit: 3,
+      });
+
+      expect(result.data).toEqual(
+        RecordResponseDTO.fromEntityArray(records.slice(0, 3)),
+      );
+      expect(result.hasNextPage).toBe(true);
+      expect(result.nextCursor).toBe('3');
+    });
+
+    it('should return paginated records with cursor when provided', async () => {
+      const filter: RecordFilterDTO = {};
+      const cursor = '5';
+      const records = [
+        { _id: '6', name: 'Record 6', price: 600, qty: 60 },
+        { _id: '7', name: 'Record 7', price: 700, qty: 70 },
+      ];
+
+      jest
+        .spyOn(recordRepository, 'findAllWithPagination')
+        .mockResolvedValue(records as any);
+
+      const result = await recordService.findAllWithPagination(filter, {
+        limit: 5,
+        cursor,
+      });
+      expect(result.data).toEqual(RecordResponseDTO.fromEntityArray(records));
+      expect(recordRepository.findAllWithPagination).toHaveBeenCalledWith(
+        filter,
+        { limit: 6, cursor },
+      );
+    });
+
+    it('should cap the limit at 100', async () => {
+      const filter: RecordFilterDTO = {};
+      const records = new Array(105).fill(null).map((_, i) => ({
+        _id: `${i + 1}`,
+        name: `Record ${i + 1}`,
+        price: 100,
+        qty: 10,
+      }));
+
+      jest
+        .spyOn(recordRepository, 'findAllWithPagination')
+        .mockResolvedValue(records as any);
+
+      const result = await recordService.findAllWithPagination(filter, {
+        limit: 200,
+      });
+      expect(recordRepository.findAllWithPagination).toHaveBeenCalledWith(
+        filter,
+        { limit: 101, cursor: undefined },
+      );
+      expect(result.data).toEqual(
+        RecordResponseDTO.fromEntityArray(records.slice(0, 100)),
+      );
+      expect(result.hasNextPage).toBe(true);
+      expect(result.nextCursor).toBe('100');
     });
   });
 });

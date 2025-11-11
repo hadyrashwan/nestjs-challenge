@@ -44,8 +44,10 @@ describe('RecordController (e2e) - 100k version', () => {
       .get('/records?album=Abbey Road 9000')
       .expect(200);
 
-    expect(response.body.length).toBe(11);
-    expect(response.body[0]).toHaveProperty('album', 'Abbey Road 9000');
+    expect(response.body.data.length).toBe(10);
+    expect(response.body.data[0]).toHaveProperty('album', 'Abbey Road 9000');
+    expect(response.body).toHaveProperty('hasNextPage');
+    expect(response.body).toHaveProperty('nextCursor');
   });
 
   it('should filter records by format', async () => {
@@ -53,8 +55,10 @@ describe('RecordController (e2e) - 100k version', () => {
       .get(`/records?format=${RecordFormat.VINYL}`)
       .expect(200);
 
-    expect(response.body.length).toBe(100000);
-    expect(response.body[0]).toHaveProperty('format', RecordFormat.VINYL);
+    expect(response.body.data.length).toBe(10);
+    expect(response.body.data[0]).toHaveProperty('format', RecordFormat.VINYL);
+    expect(response.body).toHaveProperty('hasNextPage');
+    expect(response.body).toHaveProperty('nextCursor');
   });
 
   it('should filter records by category', async () => {
@@ -62,8 +66,13 @@ describe('RecordController (e2e) - 100k version', () => {
       .get(`/records?category=${RecordCategory.ROCK}`)
       .expect(200);
 
-    expect(response.body.length).toBe(100000); // No pagination yet
-    expect(response.body[0]).toHaveProperty('category', RecordCategory.ROCK);
+    expect(response.body.data.length).toBe(10);
+    expect(response.body.data[0]).toHaveProperty(
+      'category',
+      RecordCategory.ROCK,
+    );
+    expect(response.body).toHaveProperty('hasNextPage');
+    expect(response.body).toHaveProperty('nextCursor');
   });
 
   it('should search records by query', async () => {
@@ -71,8 +80,10 @@ describe('RecordController (e2e) - 100k version', () => {
       .get('/records?q=Abbey Road 50019')
       .expect(200);
 
-    expect(response.body.length).toBe(1);
-    expect(response.body[0]).toHaveProperty('artist', 'The Beatles');
+    expect(response.body.data.length).toBe(1);
+    expect(response.body.data[0]).toHaveProperty('artist', 'The Beatles');
+    expect(response.body).toHaveProperty('hasNextPage');
+    expect(response.body).toHaveProperty('nextCursor');
   });
 
   it('should combine filters correctly', async () => {
@@ -80,9 +91,14 @@ describe('RecordController (e2e) - 100k version', () => {
       .get(`/records?album=Abbey Road 3000&category=${RecordCategory.ROCK}`)
       .expect(200);
 
-    expect(response.body.length).toBe(11);
-    expect(response.body[0]).toHaveProperty('artist', 'The Beatles');
-    expect(response.body[0]).toHaveProperty('category', RecordCategory.ROCK);
+    expect(response.body.data.length).toBe(10);
+    expect(response.body.data[0]).toHaveProperty('artist', 'The Beatles');
+    expect(response.body.data[0]).toHaveProperty(
+      'category',
+      RecordCategory.ROCK,
+    );
+    expect(response.body).toHaveProperty('hasNextPage');
+    expect(response.body).toHaveProperty('nextCursor');
   });
 
   afterAll(async () => {

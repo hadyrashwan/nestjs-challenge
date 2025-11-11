@@ -12,6 +12,8 @@ import { RecordRepository } from '../repository/record.repository';
 import { RecordData } from '../types/record.data-type';
 import { TracklistService } from '../tracklist/tracklist.service';
 import { RecordResponseDTO } from '../dtos/create-record.response.dto';
+import { RecordPaginationDTO } from '../dtos/record-pagination.dto';
+import { PaginatedRecordResponseDTO } from '../dtos/paginated-record.response.dto';
 
 @Injectable()
 export class RecordService {
@@ -78,5 +80,32 @@ export class RecordService {
   async findAll(filter: RecordFilterDTO): Promise<RecordResponseDTO[]> {
     const records = await this.recordRepository.findAll(filter);
     return RecordResponseDTO.fromEntityArray(records);
+  }
+
+  async findAllWithPagination(
+    filter: RecordFilterDTO,
+    pagination: RecordPaginationDTO,
+  ): Promise<PaginatedRecordResponseDTO> {
+    const { limit = 10, cursor } = pagination;
+    const actualLimit = Math.min(limit, 100);
+
+    const records = await this.recordRepository.findAllWithPagination(filter, {
+      limit: actualLimit + 1,
+      cursor,
+    });
+
+    const hasNextPage = records.length > actualLimit;
+    const data = hasNextPage ? records.slice(0, actualLimit) : records;
+
+    let nextCursor: string | null = null;
+    if (data.length > 0 && hasNextPage) {
+      nextCursor = data[data.length - 1]._id.toString();
+    }
+
+    return new PaginatedRecordResponseDTO(
+      RecordResponseDTO.fromEntityArray(data),
+      nextCursor,
+      hasNextPage,
+    );
   }
 }

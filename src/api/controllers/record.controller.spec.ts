@@ -20,6 +20,7 @@ describe('RecordController', () => {
           useValue: {
             create: jest.fn(),
             findAll: jest.fn(),
+            findAllWithPagination: jest.fn(),
             update: jest.fn(),
           },
         },
@@ -66,11 +67,22 @@ describe('RecordController', () => {
 
     const filter: RecordFilterDTO = {};
 
-    jest.spyOn(recordService, 'findAll').mockResolvedValue(records as any);
+    jest.spyOn(recordService, 'findAllWithPagination').mockResolvedValue({
+      data: records as any,
+      nextCursor: null,
+      hasNextPage: false,
+    });
 
-    const result = await recordController.findAll(filter);
-    expect(result).toEqual(records);
-    expect(recordService.findAll).toHaveBeenCalledWith(filter);
+    const result = await recordController.findAll(filter, '10', undefined);
+    expect(result).toEqual({
+      data: records,
+      nextCursor: null,
+      hasNextPage: false,
+    });
+    expect(recordService.findAllWithPagination).toHaveBeenCalledWith(filter, {
+      limit: 10,
+      cursor: undefined,
+    });
   });
 
   it('should throw InternalServerErrorException when recordService.update throws InternalServerErrorException', async () => {

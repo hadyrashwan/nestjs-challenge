@@ -47,6 +47,48 @@ export class RecordRepository {
     return await this.recordModel.find(mongoFilter).exec();
   }
 
+  async findAllWithPagination(
+    filter: RecordFilterDTO,
+    options: { limit: number; cursor?: string },
+  ): Promise<Record[]> {
+    const mongoFilter: FilterQuery<Record> = {};
+
+    // Apply the same filter logic as findAll
+    if (filter.q) {
+      mongoFilter.$or = [
+        { artist: { $regex: filter.q, $options: 'i' } },
+        { album: { $regex: filter.q, $options: 'i' } },
+        { category: { $regex: filter.q, $options: 'i' } },
+      ];
+    }
+
+    if (filter.artist) {
+      mongoFilter.artist = { $regex: filter.artist, $options: 'i' };
+    }
+
+    if (filter.album) {
+      mongoFilter.album = { $regex: filter.album, $options: 'i' };
+    }
+
+    if (filter.format) {
+      mongoFilter.format = filter.format;
+    }
+
+    if (filter.category) {
+      mongoFilter.category = filter.category;
+    }
+
+    if (options.cursor) {
+      mongoFilter._id = { $gt: options.cursor };
+    }
+
+    return await this.recordModel
+      .find(mongoFilter)
+      .sort({ _id: 1 })
+      .limit(options.limit)
+      .exec();
+  }
+
   async findById(
     id: string,
     options?: { session?: ClientSession },
