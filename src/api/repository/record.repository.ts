@@ -18,6 +18,8 @@ export class RecordRepository {
   async findAll(filter: RecordFilterDTO): Promise<Record[]> {
     const mongoFilter: FilterQuery<Record> = {};
 
+    // TODO: Use $search aggregation (Atlas search) when available.
+    // https://www.mongodb.com/docs/atlas/atlas-search/tutorial/?deployment-type=atlas&language-atlas-only-2=atlas-ui
     if (filter.q) {
       mongoFilter.$or = [
         { artist: { $regex: filter.q, $options: 'i' } },

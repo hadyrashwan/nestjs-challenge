@@ -94,6 +94,16 @@ npm run test:e2e
 ```
 Run Tests with Coverage
 
+#### Run 100K records e2e test
+Add the needed data first
+```
+npm run setup:100k-db
+```
+Run the test 
+```
+setup:db
+```
+
 
 Run Linting
 To check if your code passes ESLint checks:

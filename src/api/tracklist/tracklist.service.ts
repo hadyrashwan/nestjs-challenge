@@ -53,6 +53,7 @@ export class TracklistService {
         data: error.response?.data || 'No response data',
         mbid,
       };
+      // TODO: Use nestjs built in logger.
       console.error('API error:', cause);
       return null;
     }
