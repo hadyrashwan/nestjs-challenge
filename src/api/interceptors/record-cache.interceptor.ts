@@ -70,10 +70,6 @@ export class RecordCacheInterceptor implements NestInterceptor {
                     'Cache-Control',
                     `public, max-age=${TTL_IN_MS}`,
                   );
-                  response.setHeader(
-                    'Cache-Control',
-                    `public, max-age=${TTL_IN_MS}`,
-                  );
                   response.setHeader('X-Cache-Status', 'MISS');
                 }),
               )
