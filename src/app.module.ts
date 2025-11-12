@@ -10,7 +10,7 @@ import { AppConfig } from './app.config';
     MongooseModule.forRoot(AppConfig.mongoUrl),
     // Add cache module with in-memory store. In production, consider using Redis or other stores as a second Layer cache.
     CacheModule.register({
-      ttl: 60, // seconds
+      ttl: 60, //  in milliseconds
       max: 100, // maximum number of items in cache
     }),
     RecordModule,
