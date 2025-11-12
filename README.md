@@ -3,6 +3,29 @@
 
 This is a **NestJS** application starter with MongoDB integration. If necessary, it provides a script to boot a Mongo emulator for Docker. This setup includes end-to-end tests, unit tests, test coverage, linting, and database setup with data from `data.json`.
 
+##  New Features Added
+- **Large Dataset Testing**  
+  Added a **100k-records dataset** along with performance and integration tests.
+
+- **MusicBrainz API Integration**  
+  Integrated the **MusicBrainz API** to fetch album metadata.
+
+- **Order Transactions**  
+  Added  **order functionality** with MongoDB **transaction support**.
+
+- **Cursor-Based Pagination**  
+  Added **cursor-based approach** for handling large datasets efficiently.
+
+- **Caching Layer**  
+  Integrated **@nestjs/cache-manager** for faster repeated queries.
+
+- **Frontend Interface**  
+  Added static HTML pages providing a simple UI for creating records.
+
+- **E2E Frontend Tests**  
+  Implemented automated **Playwright** end-to-end tests.
+
+
 ## Installation
 
 ### Install dependencies:
@@ -112,4 +135,3 @@ To check if your code passes ESLint checks:
 npm run lint
 ```
 This command will show you any linting issues with your code.
-
