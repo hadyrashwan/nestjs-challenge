@@ -126,9 +126,14 @@ Run the test
 ```
 setup:db
 ```
+#### Run Frontend End-to-End Tests
+To run frontend end-to-end test:
+```
+npm run test:frontend-e2e
+```
 
 
-Run Linting
+### Run Linting
 To check if your code passes ESLint checks:
 
 ```
