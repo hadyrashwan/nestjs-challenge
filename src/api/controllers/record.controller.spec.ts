@@ -1,4 +1,5 @@
 import { HttpModule } from '@nestjs/axios';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Test, TestingModule } from '@nestjs/testing';
 import { CreateRecordRequestDTO } from '../dtos/create-record.request.dto';
 import { RecordFilterDTO } from '../dtos/record-filter.dto';
@@ -21,6 +22,13 @@ describe('RecordController', () => {
             create: jest.fn(),
             findAllWithPagination: jest.fn(),
             update: jest.fn(),
+          },
+        },
+        {
+          provide: CACHE_MANAGER,
+          useValue: {
+            get: jest.fn(),
+            set: jest.fn(),
           },
         },
       ],

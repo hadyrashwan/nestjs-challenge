@@ -1,4 +1,13 @@
-import { Controller, Get, Post, Body, Param, Query, Put } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Query,
+  Put,
+  Inject,
+} from '@nestjs/common';
 import { ApiOperation, ApiQuery, ApiResponse } from '@nestjs/swagger';
 import { CreateRecordRequestDTO } from '../dtos/create-record.request.dto';
 import { UpdateRecordRequestDTO } from '../dtos/update-record.request.dto';
@@ -8,10 +17,15 @@ import { RecordIdParamDTO } from '../dtos/record-id-param.dto';
 import { RecordResponseDTO } from '../dtos/create-record.response.dto';
 import { RecordPaginationDTO } from '../dtos/record-pagination.dto';
 import { PaginatedRecordResponseDTO } from '../dtos/paginated-record.response.dto';
+import { RecordCache } from '../decorators/cache.decorator';
+import { CACHE_MANAGER, Cache } from '@nestjs/cache-manager';
 
 @Controller('records')
 export class RecordController {
-  constructor(private readonly recordService: RecordService) {}
+  constructor(
+    private readonly recordService: RecordService,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
+  ) {}
 
   @Post()
   @ApiOperation({ summary: 'Create a new record' })
@@ -68,6 +82,7 @@ export class RecordController {
     description:
       'Cursor for pagination (ID of the last record from previous page)',
   })
+  @RecordCache({ ttl: 300000000, maxAge: 30000000 }) // Cache for 5 minutes
   async findAll(
     @Query() filter: RecordFilterDTO,
     @Query() pagination: RecordPaginationDTO,

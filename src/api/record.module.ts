@@ -5,11 +5,13 @@ import { RecordRepository } from './repository/record.repository';
 import { RecordSchema } from './schemas/record.schema';
 import { RecordService } from './services/record.service';
 import { TracklistModule } from './tracklist/tracklist.module';
+import { CacheModule } from '@nestjs/cache-manager';
 
 @Module({
   imports: [
     MongooseModule.forFeature([{ name: 'Record', schema: RecordSchema }]),
     TracklistModule,
+    CacheModule.register(),
   ],
   controllers: [RecordController],
   providers: [RecordService, RecordRepository],
