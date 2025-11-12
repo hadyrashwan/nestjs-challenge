@@ -7,6 +7,7 @@ import {
   Query,
   Put,
   Inject,
+  UseInterceptors,
 } from '@nestjs/common';
 import { ApiOperation, ApiQuery, ApiResponse } from '@nestjs/swagger';
 import { CreateRecordRequestDTO } from '../dtos/create-record.request.dto';
@@ -19,6 +20,7 @@ import { RecordPaginationDTO } from '../dtos/record-pagination.dto';
 import { PaginatedRecordResponseDTO } from '../dtos/paginated-record.response.dto';
 import { RecordCache } from '../decorators/cache.decorator';
 import { CACHE_MANAGER, Cache } from '@nestjs/cache-manager';
+import { RecordCacheInterceptor } from '../interceptors/record-cache.interceptor';
 
 @Controller('records')
 export class RecordController {
@@ -82,7 +84,7 @@ export class RecordController {
     description:
       'Cursor for pagination (ID of the last record from previous page)',
   })
-  @RecordCache({ ttl: 300000000, maxAge: 30000000 }) // Cache for 5 minutes
+  @UseInterceptors(RecordCacheInterceptor)
   async findAll(
     @Query() filter: RecordFilterDTO,
     @Query() pagination: RecordPaginationDTO,

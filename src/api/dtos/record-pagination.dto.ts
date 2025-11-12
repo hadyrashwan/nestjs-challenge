@@ -1,6 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsOptional, IsInt, IsString, Min } from 'class-validator';
+import { IsOptional, IsInt, IsString, Min, IsMongoId } from 'class-validator';
 
 export class RecordPaginationDTO {
   @ApiPropertyOptional({
@@ -20,6 +20,7 @@ export class RecordPaginationDTO {
       'Cursor for pagination (ID of the last record from previous page)',
   })
   @IsOptional()
+  @IsMongoId()
   @IsString()
   cursor?: string;
 }
