@@ -35,7 +35,7 @@ describe('RecordController (e2e) - 100k version', () => {
     consoleErrorSpy.mockRestore();
   });
 
-  it('should finder 100k docs', async () => {
+  it('should find 100k docs', async () => {
     expect(documentsCount).toBe(100_000);
   });
 
@@ -99,6 +99,66 @@ describe('RecordController (e2e) - 100k version', () => {
     );
     expect(response.body).toHaveProperty('hasNextPage');
     expect(response.body).toHaveProperty('nextCursor');
+  });
+
+  it('should return cached response on second request with 100k dataset (cache HIT)', async () => {
+    const response1 = await request(app.getHttpServer())
+      .get('/records?album=Abbey Road 8000')
+      .expect(200);
+
+    expect(response1.headers['x-cache-status']).toBe('MISS');
+
+    const response2 = await request(app.getHttpServer())
+      .get('/records?album=Abbey Road 8000')
+      .expect(200);
+
+    expect(response2.headers['x-cache-status']).toBe('HIT');
+    expect(response2.body).toEqual(response1.body);
+  });
+
+  it('should bypass cache when Cache-Control header is no-cache with 100k dataset', async () => {
+    const response = await request(app.getHttpServer())
+      .get('/records?album=Abbey Road 9001')
+      .set('Cache-Control', 'no-cache')
+      .expect(200);
+
+    expect(response.headers['x-cache-status']).toBe('MISS');
+  });
+
+  it('should bypass cache when Pragma header is no-cache with 100k dataset', async () => {
+    const response = await request(app.getHttpServer())
+      .get('/records?album=Abbey Road 9002')
+      .set('Pragma', 'no-cache')
+      .expect(200);
+
+    expect(response.headers['x-cache-status']).toBe('MISS');
+  });
+
+  it('should bypass cache when cursor parameter is present with 100k dataset', async () => {
+    const response = await request(app.getHttpServer())
+      .get('/records?album=Abbey Road 9003&limit=5')
+      .expect(200);
+
+    expect(response.body.nextCursor).not.toBeNull();
+
+    // Use cursor to fetch next page - should bypass cache
+    const responseWithCursor = await request(app.getHttpServer())
+      .get(
+        `/records?album=Abbey Road 9003&limit=5&cursor=${response.body.nextCursor}`,
+      )
+      .expect(200);
+
+    expect(responseWithCursor.headers['x-cache-status']).toBe('MISS');
+  });
+
+  it('should have cache-control headers in response with 100k dataset', async () => {
+    const response = await request(app.getHttpServer())
+      .get('/records?album=Abbey Road 9004')
+      .expect(200);
+
+    expect(response.headers).toHaveProperty('cache-control');
+    expect(response.headers['cache-control']).toMatch(/public, max-age=\d+/);
+    expect(response.headers).toHaveProperty('x-cache-status');
   });
 
   afterAll(async () => {

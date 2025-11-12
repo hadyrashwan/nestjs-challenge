@@ -613,6 +613,145 @@ describe('RecordController (e2e)', () => {
     expect(response.body.data[0].category).toBe(RecordCategory.JAZZ);
   });
 
+  it('should return cached response on second request (cache HIT)', async () => {
+    const createRecordDto = {
+      artist: 'Cache Test Artist',
+      album: 'Cache Test Album',
+      price: 25,
+      qty: 10,
+      format: RecordFormat.VINYL,
+      category: RecordCategory.ROCK,
+    };
+
+    await request(app.getHttpServer())
+      .post('/records')
+      .send(createRecordDto)
+      .expect(201);
+
+    // First request - should be a cache miss
+    const firstResponse = await request(app.getHttpServer())
+      .get('/records?artist=Cache Test Artist')
+      .expect(200);
+
+    expect(firstResponse.headers['x-cache-status']).toBe('MISS');
+
+    // Second request with same parameters - should be a cache hit
+    const secondResponse = await request(app.getHttpServer())
+      .get('/records?artist=Cache Test Artist')
+      .expect(200);
+
+    expect(secondResponse.headers['x-cache-status']).toBe('HIT');
+    expect(secondResponse.body).toEqual(firstResponse.body);
+  });
+
+  it('should bypass cache when Cache-Control header is no-cache', async () => {
+    const createRecordDto = {
+      artist: 'No-Cache Test Artist',
+      album: 'No-Cache Test Album',
+      price: 25,
+      qty: 10,
+      format: RecordFormat.VINYL,
+      category: RecordCategory.ROCK,
+    };
+
+    await request(app.getHttpServer())
+      .post('/records')
+      .send(createRecordDto)
+      .expect(201);
+
+    // Request with no-cache header - should always be a cache miss
+    const response = await request(app.getHttpServer())
+      .get('/records?artist=No-Cache Test Artist')
+      .set('Cache-Control', 'no-cache')
+      .expect(200);
+
+    expect(response.headers['x-cache-status']).toBe('MISS');
+  });
+
+  it('should bypass cache when Pragma header is no-cache', async () => {
+    const createRecordDto = {
+      artist: 'Pragma No-Cache Test Artist',
+      album: 'Pragma No-Cache Test Album',
+      price: 25,
+      qty: 10,
+      format: RecordFormat.VINYL,
+      category: RecordCategory.ROCK,
+    };
+
+    await request(app.getHttpServer())
+      .post('/records')
+      .send(createRecordDto)
+      .expect(201);
+
+    // Request with pragma no-cache header - should always be a cache miss
+    const response = await request(app.getHttpServer())
+      .get('/records?artist=Pragma No-Cache Test Artist')
+      .set('Pragma', 'no-cache')
+      .expect(200);
+
+    expect(response.headers['x-cache-status']).toBe('MISS');
+  });
+
+  it('should bypass cache when cursor parameter is present', async () => {
+    // Create multiple records for pagination
+    for (let i = 0; i < 5; i++) {
+      const createRecordDto = {
+        artist: `Cursor Cache Test Artist ${i}`,
+        album: `Cursor Cache Test Album ${i}`,
+        price: 25,
+        qty: 10,
+        format: RecordFormat.VINYL,
+        category: RecordCategory.ROCK,
+      };
+
+      await request(app.getHttpServer())
+        .post('/records')
+        .send(createRecordDto)
+        .expect(201);
+    }
+
+    // First request without cursor to get a cursor
+    const firstResponse = await request(app.getHttpServer())
+      .get('/records?limit=2&artist=Cursor Cache Test')
+      .expect(200);
+
+    expect(firstResponse.headers['x-cache-status']).toBe('MISS');
+    expect(firstResponse.body.nextCursor).not.toBeNull();
+
+    // Request with cursor parameter - should bypass cache
+    const secondResponse = await request(app.getHttpServer())
+      .get(
+        `/records?limit=2&cursor=${firstResponse.body.nextCursor}&artist=Cursor Cache Test`,
+      )
+      .expect(200);
+
+    expect(secondResponse.headers['x-cache-status']).toBe('MISS');
+  });
+
+  it('should have cache-control headers in response', async () => {
+    const createRecordDto = {
+      artist: 'Cache Headers Test Artist',
+      album: 'Cache Headers Test Album',
+      price: 25,
+      qty: 10,
+      format: RecordFormat.VINYL,
+      category: RecordCategory.ROCK,
+    };
+
+    await request(app.getHttpServer())
+      .post('/records')
+      .send(createRecordDto)
+      .expect(201);
+
+    const response = await request(app.getHttpServer())
+      .get('/records?artist=Cache Headers Test Artist')
+      .expect(200);
+
+    expect(response.headers).toHaveProperty('cache-control');
+    expect(response.headers['cache-control']).toMatch(/public, max-age=\d+/);
+    expect(response.headers).toHaveProperty('x-cache-status');
+  });
+
   afterEach(async () => {
     await recordModel.deleteMany({});
   });
