@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add New Record</title>
+    <style>
+        body { font-family: sans-serif; }
+        .container { max-width: 500px; margin: 50px auto; padding: 20px; border: 1px solid #ccc; border-radius: 5px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; }
+        input, select { width: 100%; padding: 8px; box-sizing: border-box; }
+        button { padding: 10px 15px; background-color: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        .message { padding: 10px; margin-top: 15px; border-radius: 5px; }
+        .success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Add New Record</h1>
+        <form id="new-record-form">
+            <div class="form-group">
+                <label for="artist">Artist</label>
+                <input type="text" id="artist" name="artist" required>
+            </div>
+            <div class="form-group">
+                <label for="album">Album</label>
+                <input type="text" id="album" name="album" required>
+            </div>
+            <div class="form-group">
+                <label for="price">Price</label>
+                <input type="number" id="price" name="price" step="0.01" required>
+            </div>
+            <div class="form-group">
+                <label for="qty">Quantity</label>
+                <input type="number" id="qty" name="qty" required>
+            </div>
+            <div class="form-group">
+                <label for="format">Format</label>
+                <select id="format" name="format" required>
+                    <option value="Vinyl">Vinyl</option>
+                    <option value="CD">CD</option>
+                    <option value="Cassette">Cassette</option>
+                    <option value="Digital">Digital</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="category">Category</label>
+                <select id="category" name="category" required>
+                    <option value="Rock">Rock</option>
+                    <option value="Jazz">Jazz</option>
+                    <option value="Hip-Hop">Hip-Hop</option>
+                    <option value="Classical">Classical</option>
+                    <option value="Pop">Pop</option>
+                    <option value="Alternative">Alternative</option>
+                    <option value="Indie">Indie</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="mbid">MusicBrainz ID (optional)</label>
+                <input type="text" id="mbid" name="mbid">
+            </div>
+            <button type="submit">Add Record</button>
+        </form>
+        <div id="message-container"></div>
+    </div>
+
+    <script>
+        document.getElementById('new-record-form').addEventListener('submit', async function(event) {
+            event.preventDefault();
+
+            const form = event.target;
+            const formData = new FormData(form);
+            const data = Object.fromEntries(formData.entries());
+            
+            // Convert price and qty to numbers
+            data.price = parseFloat(data.price);
+            data.qty = parseInt(data.qty, 10);
+
+            const messageContainer = document.getElementById('message-container');
+            messageContainer.innerHTML = '';
+
+            try {
+                const response = await fetch('/records', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    const successMessage = document.createElement('div');
+                    successMessage.className = 'message success';
+                    successMessage.textContent = 'Record added successfully! Record ID: ' + result.id;
+                    messageContainer.appendChild(successMessage);
+                    form.reset();
+                } else {
+                    const errorMessage = document.createElement('div');
+                    errorMessage.className = 'message error';
+                    let errorText = 'Failed to add record.';
+                    if (result.message) {
+                        errorText += ' ' + (Array.isArray(result.message) ? result.message.join(', ') : result.message);
+                    }
+                    errorMessage.textContent = errorText;
+                    messageContainer.appendChild(errorMessage);
+                }
+            } catch (error) {
+                const errorMessage = document.createElement('div');
+                errorMessage.className = 'message error';
+                errorMessage.textContent = 'An unexpected error occurred: ' + error.message;
+                messageContainer.appendChild(errorMessage);
+            }
+        });
+    </script>
+</body>
+</html>
