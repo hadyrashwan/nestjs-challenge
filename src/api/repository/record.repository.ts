@@ -21,7 +21,6 @@ export class RecordRepository {
   ): Promise<Record[]> {
     const mongoFilter: FilterQuery<Record> = {};
 
-    // Apply the same filter logic as findAll
     if (filter.q) {
       mongoFilter.$or = [
         { artist: { $regex: filter.q, $options: 'i' } },
