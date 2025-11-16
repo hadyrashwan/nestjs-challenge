@@ -82,6 +82,11 @@ test.describe('New Record Page', () => {
     await page.selectOption('#category', 'Rock');
     await page.fill('#mbid', 'f3bfa859-556e-45a6-aae1-904db518d6af'); // Optional field
 
+    await page.screenshot({
+      path: 'frontend-e2e/screenshot/3-before-submit-success.png',
+      fullPage: true,
+    }); // for presentation purposes
+
     // Intercept the API call
     const apiRequest = page.waitForRequest(
       (request) =>
@@ -108,6 +113,10 @@ test.describe('New Record Page', () => {
     await expect(page.locator('.message.success')).toContainText(
       'Record added successfully!',
     );
+    await page.screenshot({
+      path: 'frontend-e2e/screenshot/4-after-submit-success.png',
+      fullPage: true,
+    }); // for presentation purposes
   });
 
   test('should show error message when API call fails', async ({ page }) => {
@@ -118,6 +127,11 @@ test.describe('New Record Page', () => {
     await page.fill('#qty', '5');
     await page.selectOption('#format', 'Vinyl');
     await page.selectOption('#category', 'Rock');
+
+    await page.screenshot({
+      path: 'frontend-e2e/screenshot/5-before-submit-fail.png',
+      fullPage: true,
+    }); // for presentation purposes
 
     // Intercept the API call
     const apiResponse = page.waitForResponse(
@@ -134,6 +148,11 @@ test.describe('New Record Page', () => {
 
     // Verify the error message appears
     await expect(page.locator('.message.error')).toBeVisible();
+
+    await page.screenshot({
+      path: 'frontend-e2e/screenshot/6-after-submit-fail.png',
+      fullPage: true,
+    }); // for presentation purposes
   });
 
   test('should reset form after successful submission', async ({ page }) => {
